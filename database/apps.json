@@ -1,0 +1,25 @@
+{
+    "chrome": "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
+
+    "vscode": "code",
+    "vs code": "code",
+    "visual studio code": "code",
+
+    "notepad": "notepad",
+    "calculator": "calc",
+    "paint": "mspaint",
+
+    "cmd": "cmd",
+    "powershell": "powershell",
+
+    "explorer": "explorer",
+
+    "settings": "start ms-settings:",
+
+    "task manager": "taskmgr",
+    "control panel": "control",
+
+    "camera": "start microsoft.windows.camera:",
+    "photos": "start ms-photos:",
+    "snipping tool": "snippingtool"
+}

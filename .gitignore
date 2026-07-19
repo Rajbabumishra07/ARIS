@@ -1,0 +1,11 @@
+# Vosk Models
+model/
+models/
+
+# Voice Files
+*.mp3
+*.wav
+
+# Python
+__pycache__/
+*.pyc

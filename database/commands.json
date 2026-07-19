@@ -1,0 +1,36 @@
+{
+  "chrome": [
+    "chrome",
+    "google chrome",
+    "browser",
+    "browser kholo",
+    "open browser"
+  ],
+
+  "vscode": [
+    "vs code",
+    "visual studio code",
+    "code",
+    "editor",
+    "open code"
+  ],
+
+  "youtube": [
+    "youtube",
+    "youtube kholo",
+    "open youtube"
+  ],
+
+  "google": [
+    "google",
+    "google kholo",
+    "open google"
+  ],
+
+  "play": [
+    "play",
+    "gaana chalao",
+    "music",
+    "song"
+  ]
+}
