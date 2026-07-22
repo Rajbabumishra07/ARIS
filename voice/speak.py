@@ -1,11 +1,14 @@
 import asyncio
 import edge_tts
+import pygame
 import os
-import time
+import tempfile
 
 import voice.state as state
 
 VOICE = "en-US-AndrewNeural"
+
+pygame.mixer.init()
 
 
 def speak(text):
@@ -14,9 +17,7 @@ def speak(text):
 
     text = str(text)
 
-    # Date ko naturally bolne ke liye
     if "-" in text and len(text) == 10:
-
         try:
             day, month, year = text.split("-")
 
@@ -41,24 +42,32 @@ def speak(text):
         except Exception:
             pass
 
-    filename = f"voice_{int(time.time() * 1000)}.mp3"
+    fd, filename = tempfile.mkstemp(suffix=".mp3")
+    os.close(fd)
 
     async def _tts():
-
         communicate = edge_tts.Communicate(
             text=text,
             voice=VOICE,
             rate="+15%",
             volume="+40%"
         )
-
         await communicate.save(filename)
 
     asyncio.run(_tts())
 
-    os.startfile(filename)
+    pygame.mixer.music.load(filename)
+    pygame.mixer.music.play()
 
-    # ARIS apni hi awaaz dobara na sune
-    time.sleep(2)
+    while pygame.mixer.music.get_busy():
+        pygame.time.Clock().tick(10)
+
+    pygame.mixer.music.unload()
+
+    try:
+        os.remove(filename)
+    except Exception:
+        pass
 
     state.SPEAKING = False
+    

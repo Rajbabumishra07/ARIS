@@ -1,26 +1,60 @@
-import json
-import os
+"""
+ARIS V11 - Identity Engine
+Author : Raj Babu Mishra
+Version : 11.0
+"""
 
-OWNER_FILE = "data/owner.json"
 
-def get_owner():
-    if os.path.exists(OWNER_FILE):
-        with open(OWNER_FILE, "r", encoding="utf-8") as file:
-            data = json.load(file)
-            return data.get("name", "Unknown")
-    
-    return "Unknown"
+class Identity:
+
+    def __init__(self):
+
+        self.name = "ARIS"
+        self.version = "11.0"
+        self.owner = "Raj Babu Mishra"
+        self.language = "Hindi"
+
+        self.greeting = "जी सर, मैं ARIS उपस्थित हूँ।"
+
+        self.personality = {
+            "loyal": True,
+            "respectful": True,
+            "intelligent": True,
+            "helpful": True,
+            "proactive": True,
+            "honest": True,
+            "calm": True,
+            "advisor": True,
+            "learner": True,
+            "security_first": True
+        }
+
+    def introduce(self):
+
+        return (
+            f"{self.greeting}\n"
+            f"मैं आपका व्यक्तिगत AI Assistant हूँ।\n"
+            f"मेरा उद्देश्य आपकी सहायता करना, उचित सलाह देना,\n"
+            f"और समय के साथ लगातार बेहतर बनना है।"
+        )
+
+
+aris = Identity()
 
 
 def creator_info():
-    owner = get_owner()
 
-    return f"My creator is {owner}."
+    return (
+        f"""
+========================================
+🤖 ARIS AI Assistant
+Version : {aris.version}
 
+Developer : {aris.owner}
 
-def aris_info():
-    return {
-        "name": "ARIS",
-        "creator": get_owner(),
-        "version": "2.0"
-    }
+Language : {aris.language}
+
+Status : Ready
+========================================
+"""
+    )
