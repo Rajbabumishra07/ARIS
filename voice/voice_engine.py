@@ -9,7 +9,7 @@ q = queue.Queue()
 MODEL_PATH = os.path.join(
     os.path.dirname(os.path.dirname(__file__)),
     "models",
-    "vosk-model-small-en-us-0.15"
+    "vosk-model-en-us-0.22-lgraph"
 )
 
 model = Model(MODEL_PATH)

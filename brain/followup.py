@@ -1,29 +1,36 @@
+"""
+ARIS V13 - FollowUp Engine
+"""
+
 from brain.context import context
-from brain.nlp import nlp
+from brain.nlu import nlu
 
 
 class FollowUp:
 
     def resolve(self, command):
 
-        text = nlp.normalize(command)
+        text = nlu.normalize(command)
 
-        # YouTube
-        if "youtube" in text and context.app() == "chrome":
-            return "open youtube"
+        last = context.get_last()
 
-        # Google
-        if "google" in text and context.app() == "chrome":
-            return "open google"
+        if not last:
+            return None
 
-        # Repeat Song
-        if ("again" in text or "dobara" in text) and context.song():
-            return f"play {context.song()}"
+        # Repeat previous command
+        if text in [
+            "again",
+            "repeat",
+            "dobara",
+            "fir",
+            "phir"
+        ]:
+            return last
 
-        # Search in current app
-        if "search" in text and context.app():
+        # Follow-up search
+        if text.startswith("search "):
 
-            query = text.replace("search", "").strip()
+            query = text.replace("search", "", 1).strip()
 
             if query:
                 return f"search {query}"
