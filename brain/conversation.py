@@ -1,50 +1,80 @@
+"""
+ARIS V12 - Conversation Engine
+"""
+
+from datetime import datetime
 import random
 
 
-def conversation(command):
+class ConversationEngine:
 
-    command = str(command)
-    command = command.lower().strip()
-    command = " ".join(command.split())
+    def greeting(self):
 
-    greetings = [
-        "hello",
-        "hi",
-        "hey"
-    ]
+        hour = datetime.now().hour
 
-    if command in greetings:
-        return random.choice([
-            "Hello Raj Babu Mishra Sir. How can I help you today?",
-            "Welcome back Sir. What would you like to do?",
-            "Good to see you Sir."
-        ])
+        if 5 <= hour < 12:
 
-    elif "how are you" in command:
-        return random.choice([
-            "I am doing great Sir.",
-            "Everything is working perfectly Sir.",
-            "I am always ready to help you."
-        ])
+            greetings = [
+                "Good Morning, Sir. आशा है आपका दिन शानदार रहेगा।",
+                "सुप्रभात सर। मैं आपकी सहायता के लिए तैयार हूँ।",
+                "Good Morning, Sir. आज हम क्या शुरू करें?"
+            ]
 
-    elif "what are you doing" in command:
-        return random.choice([
-            "I am waiting for your next command.",
-            "Thinking how I can help you better.",
-            "Monitoring and ready to assist you."
-        ])
+        elif 12 <= hour < 17:
 
-    elif "thank you" in command or "thanks" in command:
-        return random.choice([
-            "You are welcome Sir.",
-            "Always happy to help.",
-            "My pleasure Sir."
-        ])
+            greetings = [
+                "Good Afternoon, Sir.",
+                "नमस्कार सर। मैं आपकी सहायता के लिए तैयार हूँ।",
+                "Good Afternoon, Sir. आज का अगला कार्य क्या है?"
+            ]
 
-    elif "good morning" in command:
-        return "Good morning Sir. I hope you have an amazing day."
+        elif 17 <= hour < 22:
 
-    elif "good night" in command:
-        return "Good night Sir. Have a wonderful sleep."
+            greetings = [
+                "Good Evening, Sir.",
+                "शुभ संध्या सर। Welcome back.",
+                "Good Evening, Sir. मैं आपकी प्रतीक्षा कर रहा था।"
+            ]
 
-    return None
+        else:
+
+            greetings = [
+                "Hello Sir. इतनी रात में भी मैं आपके साथ हूँ।",
+                "Welcome back, Sir.",
+                "Hello Sir. मैं तैयार हूँ।"
+            ]
+
+        return random.choice(greetings)
+
+    def unknown(self):
+
+        replies = [
+
+            "सर, मैं आपकी बात पूरी तरह नहीं समझ पाया। कृपया थोड़ा अलग तरीके से कहें।",
+
+            "मुझे लगता है मैं आपका आशय पूरी तरह नहीं समझ सका। क्या आप इसे दोबारा बताएँगे?",
+
+            "सर, मैं सीख रहा हूँ। कृपया इसे थोड़ा और स्पष्ट करें।",
+
+            "मैं समझना चाहता हूँ कि आप वास्तव में क्या करना चाहते हैं।"
+
+        ]
+
+        return random.choice(replies)
+
+    def thinking(self):
+
+        replies = [
+
+            "एक क्षण सर, मैं सोच रहा हूँ।",
+
+            "जी सर, मैं इसका विश्लेषण कर रहा हूँ।",
+
+            "सर, मैं सबसे उपयुक्त उत्तर खोज रहा हूँ।"
+
+        ]
+
+        return random.choice(replies)
+
+
+conversation = ConversationEngine()

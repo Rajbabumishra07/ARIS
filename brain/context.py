@@ -1,49 +1,96 @@
-class ConversationContext:
+"""
+ARIS V12 - Context Engine
+"""
+
+from collections import deque
+
+
+class ContextEngine:
 
     def __init__(self):
 
-        self.last_command = ""
-        self.last_topic = ""
-        self.last_app = ""
-        self.last_song = ""
+        self.history = deque(maxlen=20)
 
-    def update(self, command):
+        self.last_command = ""
+
+        self.last_subject = ""
+
+        self.last_action = ""
+
+    def remember(self, command):
+
+        command = command.strip()
+
+        self.history.append(command)
 
         self.last_command = command
 
-        text = command.lower()
+        words = command.lower().split()
 
-        if any(x in text for x in [
-            "chrome",
-            "browser",
-            "google"
-        ]):
-            self.last_app = "chrome"
+        if len(words):
 
-        elif any(x in text for x in [
-            "vs code",
-            "vscode",
-            "code"
-        ]):
-            self.last_app = "vscode"
+            self.last_action = words[0]
 
-        elif any(x in text for x in [
-            "hanuman chalisa",
-            "song",
-            "music",
-            "bhajan"
-        ]):
-            self.last_topic = text
-            self.last_song = text
+        if len(words) > 1:
 
-    def app(self):
-        return self.last_app
+            self.last_subject = " ".join(words[1:])
 
-    def topic(self):
-        return self.last_topic
+    def resolve(self, command):
 
-    def song(self):
-        return self.last_song
+        text = command.lower().strip()
+
+        if text in [
+
+            "again",
+            "repeat",
+
+            "phir",
+
+            "fir",
+
+            "dobara",
+
+            "again please"
+
+        ]:
+
+            return self.last_command
+
+        replace = {
+
+            "it": self.last_subject,
+            "him": self.last_subject,
+            "her": self.last_subject,
+            "that": self.last_subject,
+            "this": self.last_subject,
+            "use": self.last_subject,
+            "usko": self.last_subject,
+            "vo": self.last_subject,
+            "wah": self.last_subject
+
+        }
+
+        for key, value in replace.items():
+
+            if value:
+
+                text = text.replace(key, value)
+
+        return text
+
+    def get_last(self):
+
+        return self.last_command
+
+    def clear(self):
+
+        self.history.clear()
+
+        self.last_command = ""
+
+        self.last_subject = ""
+
+        self.last_action = ""
 
 
-context = ConversationContext()
+context = ContextEngine()

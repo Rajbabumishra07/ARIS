@@ -1,43 +1,79 @@
-import json
-from rapidfuzz import fuzz
+"""
+ARIS V12 - Intent Engine
+Author : Raj Babu Mishra
+"""
 
-COMMAND_FILE = "database/commands.json"
-
-
-def load_commands():
-    with open(COMMAND_FILE, "r", encoding="utf-8") as f:
-        return json.load(f)
+import re
 
 
-def detect_intent(command):
+class IntentEngine:
 
-    command = command.lower().strip()
+    def __init__(self):
 
-    commands = load_commands()
+        self.intents = {
 
-    best_intent = None
-    best_score = 0
+            "open_app": [
+                "open",
+                "start",
+                "launch",
+                "run",
+                "khol",
+                "khol do",
+                "chalu karo",
+                "open app",
+            ],
 
-    for intent, phrases in commands.items():
+            "search": [
+                "search",
+                "find",
+                "look for",
+                "dhundo",
+                "khojo",
+            ],
 
-        for phrase in phrases:
+            "remember": [
+                "remember",
+                "yaad rakho",
+                "remember that",
+            ],
 
-            score = fuzz.token_sort_ratio(command, phrase)
+            "note": [
+                "note",
+                "likho",
+                "note down",
+            ],
 
-            if command == phrase:
-                return intent
+            "goal": [
+                "goal",
+                "target",
+                "lakshya",
+            ],
 
-            if phrase in command:
-                score += 10
+            "exit": [
+                "exit",
+                "quit",
+                "stop",
+                "bye",
+                "goodbye",
+                "band ho jao",
+            ]
+        }
 
-            if score > best_score:
-                best_score = score
-                best_intent = intent
+    def detect(self, text):
 
-    # Debug sirf high confidence par
-    if best_score >= 80:
-        print(f"🧠 Intent: {best_intent} ({best_score:.1f})")
-        return best_intent
+        text = text.lower().strip()
 
-    # 80 se kam matlab koi valid intent nahi
-    return None
+        text = re.sub(r"\s+", " ", text)
+
+        for intent, words in self.intents.items():
+
+            for word in words:
+
+                if word in text:
+
+                    return intent
+
+        return "conversation"
+
+
+intent = IntentEngine()
