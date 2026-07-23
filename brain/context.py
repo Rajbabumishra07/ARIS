@@ -1,5 +1,6 @@
 """
-ARIS V12 - Context Engine
+ARIS V14 Context Engine
+Author : Raj Babu Mishra
 """
 
 from collections import deque
@@ -9,88 +10,118 @@ class ContextEngine:
 
     def __init__(self):
 
-        self.history = deque(maxlen=20)
+        self.history = deque(maxlen=50)
 
         self.last_command = ""
-
+        self.last_intent = ""
         self.last_subject = ""
+        self.last_app = ""
+        self.last_response = ""
 
-        self.last_action = ""
+    # ---------------- Remember ---------------- #
 
-    def remember(self, command):
+    def remember(self, command, intent="", subject="", app=""):
 
         command = command.strip()
 
-        self.history.append(command)
+        self.history.append({
+            "command": command,
+            "intent": intent,
+            "subject": subject,
+            "app": app
+        })
 
         self.last_command = command
+        self.last_intent = intent
 
-        words = command.lower().split()
+        if subject:
+            self.last_subject = subject
 
-        if len(words):
+        if app:
+            self.last_app = app
 
-            self.last_action = words[0]
-
-        if len(words) > 1:
-
-            self.last_subject = " ".join(words[1:])
+    # ---------------- Resolve ---------------- #
 
     def resolve(self, command):
 
         text = command.lower().strip()
 
-        if text in [
-
+        if text in (
             "again",
             "repeat",
-
-            "phir",
-
-            "fir",
-
             "dobara",
-
-            "again please"
-
-        ]:
-
+            "phir",
+            "fir",
+            "once more"
+        ):
             return self.last_command
 
         replace = {
 
             "it": self.last_subject,
+            "this": self.last_subject,
+            "that": self.last_subject,
             "him": self.last_subject,
             "her": self.last_subject,
-            "that": self.last_subject,
-            "this": self.last_subject,
-            "use": self.last_subject,
             "usko": self.last_subject,
             "vo": self.last_subject,
-            "wah": self.last_subject
+            "wah": self.last_subject,
+
+            "app": self.last_app,
+            "application": self.last_app
 
         }
 
-        for key, value in replace.items():
+        words = text.split()
 
-            if value:
+        output = []
 
-                text = text.replace(key, value)
+        for word in words:
 
-        return text
+            if word in replace and replace[word]:
+                output.append(replace[word])
+            else:
+                output.append(word)
 
-    def get_last(self):
+        return " ".join(output)
 
-        return self.last_command
+    # ---------------- Response ---------------- #
+
+    def set_response(self, response):
+
+        self.last_response = response
+
+    def response(self):
+
+        return self.last_response
+
+    # ---------------- History ---------------- #
+
+    def previous(self):
+
+        if len(self.history) < 2:
+            return None
+
+        return list(self.history)[-2]
+
+    def latest(self):
+
+        if not self.history:
+            return None
+
+        return self.history[-1]
+
+    # ---------------- Clear ---------------- #
 
     def clear(self):
 
         self.history.clear()
 
         self.last_command = ""
-
+        self.last_intent = ""
         self.last_subject = ""
-
-        self.last_action = ""
+        self.last_app = ""
+        self.last_response = ""
 
 
 context = ContextEngine()

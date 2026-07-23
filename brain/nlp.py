@@ -1,38 +1,57 @@
+"""
+ARIS V14 NLP Engine
+Author : Raj Babu Mishra
+"""
+
+import re
+
+
 class NLP:
+
+    def __init__(self):
+
+        self.replace = {
+
+            # Hindi
+            "khol do": "open",
+            "khol": "open",
+            "kholo": "open",
+            "band karo": "close",
+            "band": "close",
+
+            "yaad rakho": "remember",
+            "yaad rakhna": "remember",
+
+            "dhundo": "search",
+            "khojo": "search",
+
+            "dobara": "again",
+            "phir": "again",
+            "fir": "again",
+
+            # English fixes
+            "whats": "what is",
+            "whore": "who are",
+            "im": "i am",
+
+            # Common Vosk mistakes
+            "he stopped": "stop",
+            "you stop": "stop",
+            "exude": "exit",
+            "egypt blue": "is blue",
+            "easy blue": "is blue"
+        }
 
     def normalize(self, text):
 
         text = text.lower().strip()
 
-        replace = {
-
-            "khol do": "open",
-            "kholo": "open",
-            "chalu karo": "open",
-            "start karo": "open",
-
-            "band karo": "close",
-            "band kar do": "close",
-            "close kar do": "close",
-
-            "chalao": "play",
-            "play karo": "play",
-            "bajao": "play",
-            "laga do": "play",
-
-            "google kholo": "open google",
-            "youtube kholo": "open youtube",
-            "chrome kholo": "open chrome",
-
-            "hanuman ji": "hanuman chalisa",
-            "bajrangbali": "hanuman chalisa",
-
-        }
-
-        for old, new in replace.items():
+        for old, new in self.replace.items():
             text = text.replace(old, new)
 
-        return text
+        text = re.sub(r"\s+", " ", text)
+
+        return text.strip()
 
 
 nlp = NLP()

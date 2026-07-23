@@ -5,9 +5,10 @@ from voice.voice_commands import special_voice_command
 from core.brain import process_command
 from voice.speak import speak
 
-from brain.nlp import nlp
+from brain.nlu import nlu
 from brain.followup import followup
 from brain.multi_command import multi
+from brain.context import context
 
 sleep_mode = False
 
@@ -25,7 +26,19 @@ def start_listening():
         if not command:
             continue
 
-        command = nlp.normalize(command)
+        command = nlu.normalize(command)
+
+        # Ignore garbage words
+        if command in [
+            "",
+            "the",
+            "a",
+            "an",
+            "uh",
+            "hmm",
+            "um"
+        ]:
+            continue
 
         print("👤 You:", command)
 
@@ -39,13 +52,14 @@ def start_listening():
             "stop listening",
             "band ho jao",
             "so jao",
+            "goodbye"
         ]:
 
-            speak("Good night, Akshat Sir.")
+            speak("Good night, Sir.")
             print("ARIS Offline")
             break
 
-        # ---------------- Special Commands ---------------- #
+        # ---------------- Special ---------------- #
 
         action = special_voice_command(command)
 
@@ -57,7 +71,7 @@ def start_listening():
 
             continue
 
-        # ---------------- Sleep Mode ---------------- #
+        # ---------------- Sleep ---------------- #
 
         if sleep_mode:
 
@@ -65,19 +79,18 @@ def start_listening():
 
                 sleep_mode = False
 
-                speak("Yes, Akshat Sir.")
+                speak("Yes Sir.")
 
             continue
 
-        # ---------------- Wake Word ---------------- #
+        # ---------------- Wake ---------------- #
 
         if is_wake_word(command):
 
-            speak("Ji, Akshat Sir.")
-
+            speak("Hello Sir.")
             continue
 
-        # ---------------- Follow Up ---------------- #
+        # ---------------- FollowUp ---------------- #
 
         resolved = followup.resolve(command)
 
@@ -100,11 +113,13 @@ def start_listening():
 
             result = process_command(cmd)
 
+            context.set_response(result)
+
             if result == "exit":
 
-                speak("Goodbye")
+                speak("Goodbye Sir.")
 
-                print("Voice Mode Closed")
+                print("ARIS Offline")
 
                 return
 

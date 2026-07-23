@@ -1,5 +1,6 @@
 """
-ARIS V13 Planner Engine
+ARIS V14 Planner Engine
+Author : Raj Babu Mishra
 """
 
 from datetime import datetime
@@ -7,74 +8,111 @@ from datetime import datetime
 
 class Planner:
 
+    def __init__(self):
+
+        self.active_plan = None
+
+    # -------------------------------- #
+
     def create_plan(self, goal):
 
-        goal = goal.lower().strip()
+        goal = goal.strip().lower()
 
-        plan = []
+        plans = {
 
-        if "python" in goal:
+            "python": [
+                "Learn Basics",
+                "Practice Daily",
+                "Build Small Projects",
+                "Build Advanced Projects",
+                "Master Python"
+            ],
 
-            plan = [
-                "Python Basics",
-                "Functions",
-                "OOP",
-                "File Handling",
-                "Projects"
-            ]
-
-        elif "aris" in goal:
-
-            plan = [
+            "aris": [
                 "Analyze Request",
-                "Select Engine",
-                "Execute Task",
+                "Understand Intent",
+                "Reason About Request",
+                "Choose Best Action",
+                "Execute",
                 "Verify Result",
-                "Learn From Result"
-            ]
+                "Learn From Experience"
+            ],
 
-        elif "study" in goal:
-
-            plan = [
+            "study": [
                 "Read Theory",
-                "Make Notes",
-                "Practice Questions",
-                "Revision",
-                "Mock Test"
+                "Prepare Notes",
+                "Solve Questions",
+                "Revise",
+                "Take Test"
             ]
-
-        else:
-
-            plan = [
-                "Understand Goal",
-                "Break Into Steps",
-                "Execute Step",
-                "Verify",
-                "Finish"
-            ]
-
-        return {
-            "goal": goal,
-            "created": datetime.now().strftime("%d-%m-%Y %H:%M"),
-            "steps": plan,
-            "completed": 0
         }
 
-    def next_step(self, plan):
+        steps = plans.get(goal)
 
-        completed = plan["completed"]
+        if steps is None:
 
-        if completed >= len(plan["steps"]):
+            steps = [
+                "Understand Goal",
+                "Break Into Steps",
+                "Execute",
+                "Verify",
+                "Complete"
+            ]
+
+        self.active_plan = {
+
+            "goal": goal,
+            "created": datetime.now().strftime("%d-%m-%Y %H:%M:%S"),
+            "steps": steps,
+            "completed": 0
+
+        }
+
+        return self.active_plan
+
+    # -------------------------------- #
+
+    def current_plan(self):
+
+        return self.active_plan
+
+    # -------------------------------- #
+
+    def next_step(self, plan=None):
+
+        if plan is None:
+            plan = self.active_plan
+
+        if not plan:
+            return None
+
+        index = plan["completed"]
+
+        if index >= len(plan["steps"]):
             return "Plan Completed"
 
-        return plan["steps"][completed]
+        return plan["steps"][index]
 
-    def complete_step(self, plan):
+    # -------------------------------- #
+
+    def complete_step(self, plan=None):
+
+        if plan is None:
+            plan = self.active_plan
+
+        if not plan:
+            return None
 
         if plan["completed"] < len(plan["steps"]):
             plan["completed"] += 1
 
         return plan
+
+    # -------------------------------- #
+
+    def reset(self):
+
+        self.active_plan = None
 
 
 planner = Planner()

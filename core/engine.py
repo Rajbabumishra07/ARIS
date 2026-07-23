@@ -1,5 +1,6 @@
 """
-ARIS V13 Core Engine
+ARIS V14 Core Engine
+Author : Raj Babu Mishra
 """
 
 from brain.nlu import nlu
@@ -13,10 +14,20 @@ from core.memory import Memory
 from core.commands import execute
 from core.identity import aris
 
-memory = Memory()
-
 
 class Engine:
+
+    def __init__(self):
+
+        self.memory = Memory()
+
+        self.last_command = ""
+
+        self.last_intent = ""
+
+        self.last_response = ""
+
+    # ---------------- Main ---------------- #
 
     def process(self, command):
 
@@ -30,67 +41,137 @@ class Engine:
         command = context.resolve(command)
 
         # NLU
-        command = nlu.normalize(command)
-        intent = nlu.intent(command)
+        text = nlu.normalize(command)
 
-        print("🧠 Intent:", intent)
+        intent = nlu.intent(text)
 
-        # Greeting
-        if intent == "greeting":
-            return aris.greeting
+        entities = nlu.entities(text)
 
-        # Remember
-        if intent == "remember":
+        self.last_command = text
+        self.last_intent = intent
 
-            text = command.replace("remember", "").strip()
+        print("🧠 Intent :", intent)
 
-            memory.remember(text)
+        # Planner
+        plan = planner.create_plan(text)
 
-            return "जी सर। मैंने इसे याद रख लिया है।"
-
-        # Search
-        if intent == "search":
-
-            keyword = command.replace("search", "").strip()
-
-            data = memory.search(keyword)
-
-            if data:
-                return "\n".join(data)
-
-            return "सर, मुझे इससे संबंधित कुछ याद नहीं है।"
-
-        # Name
-        if intent == "ask_name":
-
-            data = memory.search("my name")
-
-            if data:
-                return f"सर, {data[-1]}"
-
-            return "सर, मुझे आपका नाम याद नहीं है।"
+        if plan:
+            print("📋 Plan :", plan)
 
         # Decision
-        result = decision.decide(command)
+        info = decision.decide(text)
 
-        if result["warning"]:
-            print("⚠", result["warning"])
+        if info.get("warning"):
+            print("⚠", info["warning"])
 
         # Reasoning
-        reasoning.think(command)
+        reasoning.think(text)
 
         # Router
-        route = router.route(command)
+        route = router.route(text)
 
         print("📌", route)
+        # ---------------- Greeting ---------------- #
 
-        # Execute
-        response = execute(command)
+        if intent == "greeting":
+            self.last_response = (
+                "Hello Sir. Welcome back."
+            )
+            return self.last_response
+
+        # ---------------- Ask ARIS Name ---------------- #
+
+        if intent == "ask_name":
+            self.last_response = (
+                f"{aris.greeting}\n"
+                f"My name is {aris.name}."
+            )
+            return self.last_response
+
+        # ---------------- Ask User Name ---------------- #
+
+        if intent == "ask_my_name":
+
+            data = self.memory.search("my name")
+
+            if data:
+                self.last_response = f"Sir, {data[-1]}"
+            else:
+                self.last_response = (
+                    "Sir, I don't know your name yet."
+                )
+
+            return self.last_response
+
+        # ---------------- Remember ---------------- #
+
+        if intent == "remember":
+
+            text = entities.get("query")
+
+            if not text:
+                return "Sir, what should I remember?"
+
+            self.memory.remember(text)
+
+            self.last_response = (
+                "Sir, I have remembered it."
+            )
+
+            return self.last_response
+
+        # ---------------- Search ---------------- #
+
+        if intent == "search":
+
+            keyword = entities.get("query")
+
+            result = self.memory.search(keyword)
+
+            if result:
+
+                self.last_response = "\n".join(result)
+
+            else:
+
+                self.last_response = (
+                    "Sir, nothing found."
+                )
+
+            return self.last_response
+
+        # ---------------- Exit ---------------- #
+
+        if intent == "exit":
+            return "exit"
+            # ---------------- Execute ---------------- #
+
+        response = execute(text)
 
         if response:
+
+            self.last_response = response
+
             return response
 
-        return "सर, मैं अभी सीख रहा हूँ। कृपया इसे दूसरे तरीके से कहें।"
+        # ---------------- Planner Response ---------------- #
+
+        next_step = planner.next_step(plan)
+
+        if next_step:
+
+            self.last_response = next_step
+
+            return next_step
+
+        # ---------------- Unknown ---------------- #
+
+        self.last_response = (
+            "सर, मैं इसे अभी पूरी तरह नहीं समझ पाया। "
+            "कृपया इसे दूसरे तरीके से कहें।"
+        )
+
+        return self.last_response
 
 
 engine = Engine()

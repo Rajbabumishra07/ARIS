@@ -1,24 +1,22 @@
 """
-ARIS V12 - Router Engine
+ARIS V14 - Router Engine
 """
 
-from brain.intent import intent
+from brain.nlu import nlu
 
 
 class Router:
 
     def route(self, command):
 
-        current_intent = intent.detect(command)
+        text = nlu.normalize(command)
 
-        subject = intent.extract_subject(command)
+        data = nlu.entities(text)
 
         return {
-
-            "intent": current_intent,
-            "subject": subject,
-            "command": command
-
+            "intent": data["intent"],
+            "subject": data.get("query") or data.get("app") or text,
+            "command": text
         }
 
 
