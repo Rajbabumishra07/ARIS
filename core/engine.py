@@ -14,6 +14,8 @@ from core.memory import Memory
 from core.commands import execute
 from core.identity import aris
 
+DEBUG = False
+
 
 class Engine:
 
@@ -27,6 +29,11 @@ class Engine:
 
         self.last_response = ""
 
+    def log(self, *args):
+
+        if DEBUG:
+            print(*args)
+
     # ---------------- Main ---------------- #
 
     def process(self, command):
@@ -37,10 +44,13 @@ class Engine:
             return None
 
         # Context
+
         context.remember(command)
+
         command = context.resolve(command)
 
         # NLU
+
         text = nlu.normalize(command)
 
         intent = nlu.intent(text)
@@ -48,58 +58,65 @@ class Engine:
         entities = nlu.entities(text)
 
         self.last_command = text
+
         self.last_intent = intent
 
-        print("🧠 Intent :", intent)
+        self.log("🧠 Intent :", intent)
 
         # Planner
+
         plan = planner.create_plan(text)
 
-        if plan:
-            print("📋 Plan :", plan)
+        self.log("📋 Plan :", plan)
 
         # Decision
+
         info = decision.decide(text)
 
         if info.get("warning"):
-            print("⚠", info["warning"])
+            self.log("⚠", info["warning"])
 
         # Reasoning
+
         reasoning.think(text)
 
         # Router
+
         route = router.route(text)
 
-        print("📌", route)
+        self.log("📌", route)
         # ---------------- Greeting ---------------- #
 
         if intent == "greeting":
-            self.last_response = (
-                "Hello Sir. Welcome back."
-            )
+
+            self.last_response = "Hello Sir. Welcome back."
+
             return self.last_response
 
         # ---------------- Ask ARIS Name ---------------- #
 
         if intent == "ask_name":
+
             self.last_response = (
                 f"{aris.greeting}\n"
                 f"My name is {aris.name}."
             )
+
             return self.last_response
 
         # ---------------- Ask User Name ---------------- #
 
         if intent == "ask_my_name":
 
-            data = self.memory.search("my name")
+            result = self.memory.search("my name")
 
-            if data:
-                self.last_response = f"Sir, {data[-1]}"
+            if result:
+
+                self.last_response = result[-1]
+
             else:
-                self.last_response = (
-                    "Sir, I don't know your name yet."
-                )
+
+                self.last_response = "Sir, I don't know your name yet."
 
             return self.last_response
 
@@ -107,16 +124,15 @@ class Engine:
 
         if intent == "remember":
 
-            text = entities.get("query")
+            value = entities.get("query")
 
-            if not text:
+            if not value:
+
                 return "Sir, what should I remember?"
 
-            self.memory.remember(text)
+            self.memory.remember(value)
 
-            self.last_response = (
-                "Sir, I have remembered it."
-            )
+            self.last_response = "Sir, I have remembered it."
 
             return self.last_response
 
@@ -126,6 +142,10 @@ class Engine:
 
             keyword = entities.get("query")
 
+            if not keyword:
+
+                return "Sir, what should I search?"
+
             result = self.memory.search(keyword)
 
             if result:
@@ -134,17 +154,16 @@ class Engine:
 
             else:
 
-                self.last_response = (
-                    "Sir, nothing found."
-                )
+                self.last_response = "Sir, nothing found."
 
             return self.last_response
-
-        # ---------------- Exit ---------------- #
+            # ---------------- Exit ---------------- #
 
         if intent == "exit":
+
             return "exit"
-            # ---------------- Execute ---------------- #
+
+        # ---------------- Execute ---------------- #
 
         response = execute(text)
 
@@ -154,21 +173,21 @@ class Engine:
 
             return response
 
-        # ---------------- Planner Response ---------------- #
+        # ---------------- Again ---------------- #
 
-        next_step = planner.next_step(plan)
+        if intent == "again":
 
-        if next_step:
+            if self.last_response:
 
-            self.last_response = next_step
+                return self.last_response
 
-            return next_step
+            return "Sir, there is nothing to repeat."
 
         # ---------------- Unknown ---------------- #
 
         self.last_response = (
-            "सर, मैं इसे अभी पूरी तरह नहीं समझ पाया। "
-            "कृपया इसे दूसरे तरीके से कहें।"
+            "Sir, I didn't understand that.\n"
+            "Could you please say it differently?"
         )
 
         return self.last_response
