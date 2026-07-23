@@ -1,43 +1,25 @@
-from brain.intent import detect_intent
-from brain.context import context
-from core.commands import execute
-from ai.search import internet_search
+"""
+ARIS V12 - Router Engine
+"""
+
+from brain.intent import intent
 
 
-def route(command):
+class Router:
 
-    intent = detect_intent(command)
+    def route(self, command):
 
-    print("🧠 Intent:", intent)
+        current_intent = intent.detect(command)
 
-    if intent == "chrome":
+        subject = intent.extract_subject(command)
 
-        context.update("open chrome")
+        return {
 
-        return execute("open chrome")
+            "intent": current_intent,
+            "subject": subject,
+            "command": command
 
-    elif intent == "vscode":
+        }
 
-        context.update("open vscode")
 
-        return execute("open vscode")
-
-    elif intent == "youtube":
-
-        context.update(command)
-
-        return internet_search("youtube")
-
-    elif intent == "google":
-
-        context.update(command)
-
-        return internet_search("google")
-
-    elif intent == "play":
-
-        context.update(command)
-
-        return internet_search(command)
-
-    return None
+router = Router()
