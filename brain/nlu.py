@@ -1,5 +1,5 @@
 """
-ARIS V14 - Natural Language Understanding Engine
+ARIS V15 - Natural Language Understanding Engine
 Author : Raj Babu Mishra
 """
 
@@ -11,12 +11,18 @@ class NLU:
     def __init__(self):
 
         self.filler_words = {
-            "the", "a", "an", "please", "pls", "plz",
-            "can", "could", "would", "kindly",
-            "just", "sir", "hey", "ok", "okay"
+            "the", "a", "an",
+            "please", "pls", "plz",
+            "can", "could", "would",
+            "kindly", "just",
+            "sir", "hey",
+            "ok", "okay",
+            "i", "me", "myself"
         }
 
         self.replacements = {
+
+            # Hindi
             "yaad rakho": "remember",
             "yaad rakhna": "remember",
             "dhundo": "search",
@@ -28,7 +34,23 @@ class NLU:
             "band": "close",
             "dobara": "again",
             "fir": "again",
-            "phir": "again"
+            "phir": "again",
+
+            # English Variants
+            "i remember": "remember",
+            "please remember": "remember",
+            "can you remember": "remember",
+            "could you remember": "remember",
+            "would you remember": "remember",
+
+            # Common Recognition Mistakes
+            "what each": "what is",
+            "what eg": "what is",
+            "why these": "what is",
+            "boy at": "who are",
+            "colour": "color",
+            "favourite": "favorite",
+            "period": "favorite",
         }
 
     # ---------------- Normalize ---------------- #
@@ -60,7 +82,6 @@ class NLU:
 
         text = self.normalize(text)
 
-        # Greeting
         if text in {
             "hello",
             "hi",
@@ -69,55 +90,45 @@ class NLU:
         }:
             return "greeting"
 
-        # Exit
         if text in {
             "exit",
             "quit",
             "stop",
-            "close",
             "goodbye"
         }:
             return "exit"
 
-        # Remember
+        if text == "again":
+            return "again"
+
         if text.startswith("remember "):
             return "remember"
 
-        # Search
         if text.startswith("search "):
             return "search"
 
-        # Open
         if text.startswith("open "):
             return "open"
 
-        # Close
         if text.startswith("close "):
             return "close"
 
-        # Name Questions
         if (
-            "what is your name" in text
+            "who are you" in text
+            or "what is your name" in text
             or "whats your name" in text
-            or "who are you" in text
             or "tell me your name" in text
-            or "your name" == text
-            or "apna naam batao" in text
-            or "tumhara naam" in text
+            or text == "your name"
         ):
             return "ask_name"
 
-        # My Name
         if (
             "what is my name" in text
             or "who am i" in text
-            or "mera naam" in text
+            or "my name" == text
+            or text.startswith("what is my name")
         ):
             return "ask_my_name"
-
-        # Again
-        if text == "again":
-            return "again"
 
         return "conversation"
 
@@ -151,11 +162,11 @@ class NLU:
                 data["app"] = app
                 break
 
-        if text.startswith("search "):
-            data["query"] = text[7:].strip()
+        if text.startswith("remember "):
+            data["query"] = text.replace("remember", "", 1).strip()
 
-        elif text.startswith("remember "):
-            data["query"] = text[9:].strip()
+        elif text.startswith("search "):
+            data["query"] = text.replace("search", "", 1).strip()
 
         return data
 

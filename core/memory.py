@@ -1,5 +1,5 @@
 """
-ARIS V14 Memory Engine
+ARIS V15 - Smart Memory Engine
 Author : Raj Babu Mishra
 """
 
@@ -12,37 +12,24 @@ MEMORY_FILE = "data/memory.json"
 class Memory:
 
     def __init__(self):
+
         self.data = self.load()
 
-    # -------------------------------- #
+    # ---------------- Load ---------------- #
 
-    def default(self):
+    def default_data(self):
 
         return {
-
             "owner": "Raj Babu Mishra",
-
             "profile": {},
-
             "preferences": {},
-
             "knowledge": {},
-
             "goals": [],
-
             "projects": [],
-
             "notes": [],
-
             "daily_tasks": [],
-
-            "conversation_history": [],
-
-            "important_memory": []
-
+            "conversation_history": []
         }
-
-    # -------------------------------- #
 
     def load(self):
 
@@ -50,7 +37,7 @@ class Memory:
 
         if not os.path.exists(MEMORY_FILE):
 
-            data = self.default()
+            data = self.default_data()
 
             self.save(data)
 
@@ -60,17 +47,22 @@ class Memory:
 
             with open(MEMORY_FILE, "r", encoding="utf-8") as f:
 
-                return json.load(f)
+                data = json.load(f)
 
         except Exception:
 
-            data = self.default()
+            data = self.default_data()
 
             self.save(data)
 
             return data
 
-    # -------------------------------- #
+        if "knowledge" not in data:
+            data["knowledge"] = {}
+
+        return data
+
+    # ---------------- Save ---------------- #
 
     def save(self, data=None):
 
@@ -78,7 +70,6 @@ class Memory:
             self.data = data
 
         with open(MEMORY_FILE, "w", encoding="utf-8") as f:
-
             json.dump(
                 self.data,
                 f,
@@ -86,143 +77,102 @@ class Memory:
                 ensure_ascii=False
             )
 
-    # -------------------------------- #
+    # ---------------- Remember ---------------- #
 
     def remember(self, text):
 
-        text = text.strip()
+        text = text.lower().strip()
 
-        if not text:
-            return False
+        if " is " in text:
 
-        low = text.lower()
+            key, value = text.split(" is ", 1)
 
-        if " is " in low:
+        elif "=" in text:
 
-            key, value = low.split(" is ", 1)
+            key, value = text.split("=", 1)
 
-            self.data["knowledge"][key.strip()] = value.strip()
+        else:
 
-            self.save()
-
-            return True
-
-        if text not in self.data["important_memory"]:
-
-            self.data["important_memory"].append(text)
+            self.data["notes"].append(text)
 
             self.save()
 
-        return True
+            return
 
-    # -------------------------------- #
+        key = key.strip()
+
+        value = value.strip()
+
+        if key.startswith("my "):
+            key = key[3:]
+
+        self.data["knowledge"][key] = value
+
+        self.save()
+        # ---------------- Search ---------------- #
 
     def search(self, keyword):
 
         keyword = keyword.lower().strip()
 
+        if keyword.startswith("my "):
+            keyword = keyword[3:]
+
         results = []
 
+        # Exact Key
+        if keyword in self.data["knowledge"]:
+            results.append(self.data["knowledge"][keyword])
+
+        # Partial Match
         for key, value in self.data["knowledge"].items():
 
-            if keyword in key.lower():
+            if keyword in key or keyword in value.lower():
 
-                results.append(f"{key} is {value}")
+                if value not in results:
+                    results.append(value)
 
-        for section in [
+        # Notes
+        for note in self.data["notes"]:
 
-            "important_memory",
-
-            "notes",
-
-            "goals",
-
-            "projects",
-
-            "daily_tasks"
-
-        ]:
-
-            for item in self.data.get(section, []):
-
-                if keyword in str(item).lower():
-
-                    if item not in results:
-
-                        results.append(item)
+            if keyword in note.lower():
+                results.append(note)
 
         return results
 
-    # -------------------------------- #
-
-    def forget(self, keyword):
-
-        keyword = keyword.lower().strip()
-
-        if keyword in self.data["knowledge"]:
-
-            del self.data["knowledge"][keyword]
-
-            self.save()
-
-            return True
-
-        removed = False
-
-        for item in list(self.data["important_memory"]):
-
-            if keyword in item.lower():
-
-                self.data["important_memory"].remove(item)
-
-                removed = True
-
-        if removed:
-            self.save()
-
-        return removed
-
-    # -------------------------------- #
+    # ---------------- Notes ---------------- #
 
     def add_note(self, note):
 
-        if note not in self.data["notes"]:
+        self.data["notes"].append(note)
 
-            self.data["notes"].append(note)
+        self.save()
 
-            self.save()
-
-    # -------------------------------- #
+    # ---------------- Goal ---------------- #
 
     def add_goal(self, goal):
 
-        if goal not in self.data["goals"]:
+        self.data["goals"].append(goal)
 
-            self.data["goals"].append(goal)
+        self.save()
 
-            self.save()
-
-    # -------------------------------- #
+    # ---------------- Project ---------------- #
 
     def add_project(self, project):
 
-        if project not in self.data["projects"]:
+        self.data["projects"].append(project)
 
-            self.data["projects"].append(project)
+        self.save()
 
-            self.save()
-
-    # -------------------------------- #
+    # ---------------- Task ---------------- #
 
     def add_task(self, task):
 
-        if task not in self.data["daily_tasks"]:
+        self.data["daily_tasks"].append(task)
 
-            self.data["daily_tasks"].append(task)
+        self.save()
 
-            self.save()
-
-    # -------------------------------- #
+    # ---------------- Conversation ---------------- #
 
     def add_conversation(self, user, aris):
 
@@ -234,17 +184,16 @@ class Memory:
 
         })
 
-        self.data["conversation_history"] = self.data[
-            "conversation_history"
-        ][-100:]
+        if len(self.data["conversation_history"]) > 100:
+
+            self.data["conversation_history"] = (
+                self.data["conversation_history"][-100:]
+            )
 
         self.save()
 
-    # -------------------------------- #
+    # ---------------- Get Memory ---------------- #
 
     def get_memory(self):
 
         return self.data
-
-
-memory = Memory()

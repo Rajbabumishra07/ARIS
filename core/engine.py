@@ -1,5 +1,5 @@
 """
-ARIS V14 Core Engine
+ARIS V15 Core Engine
 Author : Raj Babu Mishra
 """
 
@@ -14,8 +14,6 @@ from core.memory import Memory
 from core.commands import execute
 from core.identity import aris
 
-DEBUG = False
-
 
 class Engine:
 
@@ -24,15 +22,8 @@ class Engine:
         self.memory = Memory()
 
         self.last_command = ""
-
         self.last_intent = ""
-
         self.last_response = ""
-
-    def log(self, *args):
-
-        if DEBUG:
-            print(*args)
 
     # ---------------- Main ---------------- #
 
@@ -44,53 +35,28 @@ class Engine:
             return None
 
         # Context
-
         context.remember(command)
-
         command = context.resolve(command)
 
         # NLU
-
         text = nlu.normalize(command)
-
         intent = nlu.intent(text)
-
         entities = nlu.entities(text)
 
         self.last_command = text
-
         self.last_intent = intent
 
-        self.log("🧠 Intent :", intent)
-
-        # Planner
-
-        plan = planner.create_plan(text)
-
-        self.log("📋 Plan :", plan)
-
-        # Decision
-
-        info = decision.decide(text)
-
-        if info.get("warning"):
-            self.log("⚠", info["warning"])
-
-        # Reasoning
-
+        # Background Engines
+        planner.create_plan(text)
+        decision.decide(text)
         reasoning.think(text)
+        router.route(text)
 
-        # Router
-
-        route = router.route(text)
-
-        self.log("📌", route)
         # ---------------- Greeting ---------------- #
 
         if intent == "greeting":
 
             self.last_response = "Hello Sir. Welcome back."
-
             return self.last_response
 
         # ---------------- Ask ARIS Name ---------------- #
@@ -108,15 +74,19 @@ class Engine:
 
         if intent == "ask_my_name":
 
-            result = self.memory.search("my name")
+            result = self.memory.search("name")
 
             if result:
 
-                self.last_response = result[-1]
+                self.last_response = (
+                    f"Sir, your name is {result[0]}."
+                )
 
             else:
 
-                self.last_response = "Sir, I don't know your name yet."
+                self.last_response = (
+                    "Sir, I don't know your name yet."
+                )
 
             return self.last_response
 
@@ -154,10 +124,13 @@ class Engine:
 
             else:
 
-                self.last_response = "Sir, nothing found."
+                self.last_response = (
+                    "Sir, I couldn't find anything."
+                )
 
             return self.last_response
-            # ---------------- Exit ---------------- #
+
+        # ---------------- Exit ---------------- #
 
         if intent == "exit":
 
@@ -172,16 +145,6 @@ class Engine:
             self.last_response = response
 
             return response
-
-        # ---------------- Again ---------------- #
-
-        if intent == "again":
-
-            if self.last_response:
-
-                return self.last_response
-
-            return "Sir, there is nothing to repeat."
 
         # ---------------- Unknown ---------------- #
 
