@@ -4,13 +4,13 @@ Author : Raj Babu Mishra
 """
 
 from brain.nlu import nlu
-from brain.router import router
 from brain.context import context
+from brain.router import router
 from brain.reasoning import reasoning
 from brain.decision import decision
 from brain.planner import planner
 
-from core.memory import Memory
+from core.memory import memory
 from core.commands import execute
 from core.identity import aris
 
@@ -19,10 +19,12 @@ class Engine:
 
     def __init__(self):
 
-        self.memory = Memory()
+        self.memory = memory
 
         self.last_command = ""
+
         self.last_intent = ""
+
         self.last_response = ""
 
     # ---------------- Main ---------------- #
@@ -35,21 +37,37 @@ class Engine:
             return None
 
         # Context
+
         context.remember(command)
+
         command = context.resolve(command)
 
         # NLU
+
         text = nlu.normalize(command)
+
         intent = nlu.intent(text)
+
         entities = nlu.entities(text)
 
         self.last_command = text
+
         self.last_intent = intent
 
-        # Background Engines
-        planner.create_plan(text)
+        # Planner
+
+        plan = planner.create_plan(text)
+
+        # Decision
+
         decision.decide(text)
+
+        # Reasoning
+
         reasoning.think(text)
+
+        # Router
+
         router.route(text)
 
         # ---------------- Greeting ---------------- #
@@ -57,6 +75,7 @@ class Engine:
         if intent == "greeting":
 
             self.last_response = "Hello Sir. Welcome back."
+
             return self.last_response
 
         # ---------------- Ask ARIS Name ---------------- #
@@ -74,12 +93,14 @@ class Engine:
 
         if intent == "ask_my_name":
 
-            result = self.memory.search("name")
+            profile = self.memory.get_profile()
 
-            if result:
+            name = profile.get("name", "").strip()
+
+            if name:
 
                 self.last_response = (
-                    f"Sir, your name is {result[0]}."
+                    f"Sir, your name is {name}."
                 )
 
             else:
@@ -90,17 +111,41 @@ class Engine:
 
             return self.last_response
 
-        # ---------------- Remember ---------------- #
+        # ---------------- Favorite Color ---------------- #
+
+        if intent == "ask_favorite_color":
+
+            pref = self.memory.get_preferences()
+
+            color = pref.get(
+                "favorite_color",
+                ""
+            ).strip()
+
+            if color:
+
+                self.last_response = (
+                    f"Sir, your favorite color is {color}."
+                )
+
+            else:
+
+                self.last_response = (
+                    "Sir, I don't know your favorite color yet."
+                )
+
+            return self.last_response
+            # ---------------- Remember ---------------- #
 
         if intent == "remember":
 
-            value = entities.get("query")
+            query = entities.get("query", "").strip()
 
-            if not value:
+            if not query:
 
                 return "Sir, what should I remember?"
 
-            self.memory.remember(value)
+            self.memory.remember(query)
 
             self.last_response = "Sir, I have remembered it."
 
@@ -110,7 +155,7 @@ class Engine:
 
         if intent == "search":
 
-            keyword = entities.get("query")
+            keyword = entities.get("query", "").strip()
 
             if not keyword:
 
@@ -124,9 +169,7 @@ class Engine:
 
             else:
 
-                self.last_response = (
-                    "Sir, I couldn't find anything."
-                )
+                self.last_response = "Sir, I couldn't find anything."
 
             return self.last_response
 
@@ -145,6 +188,18 @@ class Engine:
             self.last_response = response
 
             return response
+
+        # ---------------- Planner ---------------- #
+
+        if plan:
+
+            step = planner.next_step(plan)
+
+            if step:
+
+                self.last_response = step
+
+                return step
 
         # ---------------- Unknown ---------------- #
 

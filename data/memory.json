@@ -1,24 +1,35 @@
 {
     "owner": "Raj Babu Mishra",
-    "profile": {},
-    "preferences": {},
-    "knowledge": {
-        "my period color": "blue",
-        "my care what color": "blue",
-        "my favorite color": "egypt blue",
-        "favorite color": "blue"
+
+    "profile": {
+        "name": "",
+        "age": "",
+        "gender": "",
+        "location": "",
+        "occupation": ""
     },
+
+    "preferences": {
+        "favorite_color": "",
+        "favorite_food": "",
+        "favorite_song": "",
+        "favorite_movie": "",
+        "favorite_book": ""
+    },
+
+    "knowledge": {},
+
     "goals": [],
+
     "projects": [],
-    "notes": [
-        "my marriage rainbow misread remember my near",
-        "my favorite colored into blue",
-        "my name is"
-    ],
+
+    "notes": [],
+
     "daily_tasks": [],
+
     "conversation_history": [],
-    "important_memory": [
-        "my favorite color did you blue",
-        "my name age that babu mr"
-    ]
+
+    "important_memory": [],
+
+    "created": ""
 }

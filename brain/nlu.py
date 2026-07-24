@@ -13,44 +13,35 @@ class NLU:
         self.filler_words = {
             "the", "a", "an",
             "please", "pls", "plz",
+            "sir", "hey", "ok", "okay",
             "can", "could", "would",
-            "kindly", "just",
-            "sir", "hey",
-            "ok", "okay",
-            "i", "me", "myself"
+            "kindly", "just"
         }
 
         self.replacements = {
 
-            # Hindi
             "yaad rakho": "remember",
             "yaad rakhna": "remember",
+
             "dhundo": "search",
             "khojo": "search",
             "google karo": "search",
+
             "khol do": "open",
-            "khol": "open",
+            "kholo": "open",
+
             "band karo": "close",
-            "band": "close",
+
             "dobara": "again",
             "fir": "again",
             "phir": "again",
 
-            # English Variants
-            "i remember": "remember",
-            "please remember": "remember",
-            "can you remember": "remember",
-            "could you remember": "remember",
-            "would you remember": "remember",
+            "mera naam": "my name",
+            "mera city": "my city",
+            "meri city": "my city",
 
-            # Common Recognition Mistakes
-            "what each": "what is",
-            "what eg": "what is",
-            "why these": "what is",
-            "boy at": "who are",
             "colour": "color",
-            "favourite": "favorite",
-            "period": "favorite",
+            "favourite": "favorite"
         }
 
     # ---------------- Normalize ---------------- #
@@ -69,14 +60,11 @@ class NLU:
 
         for word in text.split():
 
-            if word in self.filler_words:
-                continue
+            if word not in self.filler_words:
+                words.append(word)
 
-            words.append(word)
-
-        return " ".join(words).strip()
-
-    # ---------------- Intent ---------------- #
+        return " ".join(words)
+        # ---------------- Intent ---------------- #
 
     def intent(self, text):
 
@@ -94,6 +82,7 @@ class NLU:
             "exit",
             "quit",
             "stop",
+            "close",
             "goodbye"
         }:
             return "exit"
@@ -116,7 +105,6 @@ class NLU:
         if (
             "who are you" in text
             or "what is your name" in text
-            or "whats your name" in text
             or "tell me your name" in text
             or text == "your name"
         ):
@@ -125,14 +113,19 @@ class NLU:
         if (
             "what is my name" in text
             or "who am i" in text
-            or "my name" == text
-            or text.startswith("what is my name")
+            or text == "my name"
         ):
             return "ask_my_name"
 
-        return "conversation"
+        if (
+            "what is my favorite color" in text
+            or text == "favorite color"
+            or text == "my favorite color"
+        ):
+            return "ask_favorite_color"
 
-    # ---------------- Entities ---------------- #
+        return "conversation"
+        # ---------------- Entities ---------------- #
 
     def entities(self, text):
 
@@ -141,8 +134,8 @@ class NLU:
         data = {
             "intent": self.intent(text),
             "text": text,
-            "app": None,
-            "query": None
+            "query": None,
+            "app": None
         }
 
         apps = [
@@ -169,6 +162,28 @@ class NLU:
             data["query"] = text.replace("search", "", 1).strip()
 
         return data
+        # ---------------- Helpers ---------------- #
+
+    def is_remember(self, text):
+        return self.intent(text) == "remember"
+
+    def is_search(self, text):
+        return self.intent(text) == "search"
+
+    def is_open(self, text):
+        return self.intent(text) == "open"
+
+    def is_close(self, text):
+        return self.intent(text) == "close"
+
+    def is_greeting(self, text):
+        return self.intent(text) == "greeting"
+
+    def is_exit(self, text):
+        return self.intent(text) == "exit"
+
+    def is_again(self, text):
+        return self.intent(text) == "again"
 
 
 nlu = NLU()
