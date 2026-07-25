@@ -1,9 +1,11 @@
 """
-ARIS V15 - Natural Language Understanding Engine
+ARIS V16 - Natural Language Understanding Engine
 Author : Raj Babu Mishra
 """
 
 import re
+
+from brain.intent_patterns import match_intent
 
 
 class NLU:
@@ -37,8 +39,8 @@ class NLU:
             "phir": "again",
 
             "mera naam": "my name",
-            "mera city": "my city",
             "meri city": "my city",
+            "mera city": "my city",
 
             "colour": "color",
             "favourite": "favorite"
@@ -60,69 +62,23 @@ class NLU:
 
         for word in text.split():
 
-            if word not in self.filler_words:
-                words.append(word)
+            if word in self.filler_words:
+                continue
+
+            words.append(word)
 
         return " ".join(words)
-        # ---------------- Intent ---------------- #
+
+    # ---------------- Intent ---------------- #
 
     def intent(self, text):
 
         text = self.normalize(text)
 
-        if text in {
-            "hello",
-            "hi",
-            "hey",
-            "namaste"
-        }:
-            return "greeting"
+        intent = match_intent(text)
 
-        if text in {
-            "exit",
-            "quit",
-            "stop",
-            "close",
-            "goodbye"
-        }:
-            return "exit"
-
-        if text == "again":
-            return "again"
-
-        if text.startswith("remember "):
-            return "remember"
-
-        if text.startswith("search "):
-            return "search"
-
-        if text.startswith("open "):
-            return "open"
-
-        if text.startswith("close "):
-            return "close"
-
-        if (
-            "who are you" in text
-            or "what is your name" in text
-            or "tell me your name" in text
-            or text == "your name"
-        ):
-            return "ask_name"
-
-        if (
-            "what is my name" in text
-            or "who am i" in text
-            or text == "my name"
-        ):
-            return "ask_my_name"
-
-        if (
-            "what is my favorite color" in text
-            or text == "favorite color"
-            or text == "my favorite color"
-        ):
-            return "ask_favorite_color"
+        if intent:
+            return intent
 
         return "conversation"
         # ---------------- Entities ---------------- #
@@ -131,11 +87,13 @@ class NLU:
 
         text = self.normalize(text)
 
+        intent = self.intent(text)
+
         data = {
-            "intent": self.intent(text),
+            "intent": intent,
             "text": text,
-            "query": None,
-            "app": None
+            "query": "",
+            "app": ""
         }
 
         apps = [
@@ -155,14 +113,86 @@ class NLU:
                 data["app"] = app
                 break
 
-        if text.startswith("remember "):
-            data["query"] = text.replace("remember", "", 1).strip()
+        if intent == "remember":
 
-        elif text.startswith("search "):
-            data["query"] = text.replace("search", "", 1).strip()
+            prefixes = [
+                "remember",
+                "save",
+                "store",
+                "note",
+                "memorize"
+            ]
+
+            for prefix in prefixes:
+
+                if text.startswith(prefix):
+
+                    data["query"] = text[len(prefix):].strip()
+
+                    break
+
+        elif intent == "search":
+
+            prefixes = [
+                "search",
+                "search for",
+                "find",
+                "look for",
+                "google"
+            ]
+
+            for prefix in prefixes:
+
+                if text.startswith(prefix):
+
+                    data["query"] = text[len(prefix):].strip()
+
+                    break
+
+        elif intent == "open":
+
+            prefixes = [
+                "open",
+                "launch",
+                "start",
+                "run"
+            ]
+
+            for prefix in prefixes:
+
+                if text.startswith(prefix):
+
+                    data["app"] = text[len(prefix):].strip()
+
+                    break
+
+        elif intent == "close":
+
+            prefixes = [
+                "close",
+                "terminate",
+                "kill"
+            ]
+
+            for prefix in prefixes:
+
+                if text.startswith(prefix):
+
+                    data["app"] = text[len(prefix):].strip()
+
+                    break
 
         return data
-        # ---------------- Helpers ---------------- #
+        # ---------------- Helper Functions ---------------- #
+
+    def is_greeting(self, text):
+        return self.intent(text) == "greeting"
+
+    def is_exit(self, text):
+        return self.intent(text) == "exit"
+
+    def is_again(self, text):
+        return self.intent(text) == "again"
 
     def is_remember(self, text):
         return self.intent(text) == "remember"
@@ -176,14 +206,14 @@ class NLU:
     def is_close(self, text):
         return self.intent(text) == "close"
 
-    def is_greeting(self, text):
-        return self.intent(text) == "greeting"
+    def is_ask_name(self, text):
+        return self.intent(text) == "ask_name"
 
-    def is_exit(self, text):
-        return self.intent(text) == "exit"
+    def is_ask_my_name(self, text):
+        return self.intent(text) == "ask_my_name"
 
-    def is_again(self, text):
-        return self.intent(text) == "again"
+    def is_ask_favorite_color(self, text):
+        return self.intent(text) == "ask_favorite_color"
 
 
 nlu = NLU()

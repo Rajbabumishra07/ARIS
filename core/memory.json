@@ -1,7 +1,11 @@
 {
     "owner": "Raj Babu Mishra",
-    "profile": {},
-    "preferences": {},
+    "profile": {
+        "name": "barb"
+    },
+    "preferences": {
+        "favorite_color": "blue"
+    },
     "knowledge": {},
     "goals": [],
     "projects": [],
@@ -10,6 +14,12 @@
     "conversation_history": [],
     "important_memory": [
         "my name tags",
-        "name"
+        "name",
+        "great raj had made you aris",
+        "great rajbabu mishra made you",
+        "my faviourite color is blue",
+        "my friend is vinayak shukla",
+        "my name age",
+        "my favorite color inch blue"
     ]
 }
