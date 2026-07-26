@@ -1,11 +1,12 @@
 """
-ARIS V16 - Natural Language Understanding Engine
+ARIS V17 Natural Language Understanding Engine
 Author : Raj Babu Mishra
 """
 
 import re
 
 from brain.intent_patterns import match_intent
+from brain.entities import entities
 
 
 class NLU:
@@ -13,15 +14,32 @@ class NLU:
     def __init__(self):
 
         self.filler_words = {
-            "the", "a", "an",
-            "please", "pls", "plz",
-            "sir", "hey", "ok", "okay",
-            "can", "could", "would",
-            "kindly", "just"
+
+            "the",
+            "a",
+            "an",
+
+            "please",
+            "pls",
+            "plz",
+
+            "sir",
+            "hey",
+
+            "ok",
+            "okay",
+
+            "can",
+            "could",
+            "would",
+
+            "kindly",
+            "just"
         }
 
         self.replacements = {
 
+            # Hindi
             "yaad rakho": "remember",
             "yaad rakhna": "remember",
 
@@ -43,19 +61,26 @@ class NLU:
             "mera city": "my city",
 
             "colour": "color",
-            "favourite": "favorite"
+            "favourite": "favorite",
+
+            # Launcher
+            "launch": "open",
+            "run": "open",
+            "start": "open"
         }
 
-    # ---------------- Normalize ---------------- #
+    # ------------------------------------------------ #
 
     def normalize(self, text):
 
         text = text.lower().strip()
 
         for old, new in self.replacements.items():
+
             text = text.replace(old, new)
 
         text = re.sub(r"[^a-z0-9 ]+", " ", text)
+
         text = re.sub(r"\s+", " ", text)
 
         words = []
@@ -69,7 +94,7 @@ class NLU:
 
         return " ".join(words)
 
-    # ---------------- Intent ---------------- #
+    # ------------------------------------------------ #
 
     def intent(self, text):
 
@@ -81,7 +106,8 @@ class NLU:
             return intent
 
         return "conversation"
-        # ---------------- Entities ---------------- #
+
+    # ------------------------------------------------ #
 
     def entities(self, text):
 
@@ -90,28 +116,29 @@ class NLU:
         intent = self.intent(text)
 
         data = {
+
             "intent": intent,
+
             "text": text,
+
             "query": "",
+
             "app": ""
+
         }
 
-        apps = [
-            "chrome",
-            "youtube",
-            "google",
-            "calculator",
-            "notepad",
-            "paint",
-            "camera",
-            "settings"
-        ]
+        # ---------------- Dynamic App Detection ---------------- #
 
-        for app in apps:
+        apps = entities.get_all_apps()
+
+        for app in sorted(apps, key=len, reverse=True):
 
             if app in text:
+
                 data["app"] = app
+
                 break
+                # ---------------- Remember ---------------- #
 
         if intent == "remember":
 
@@ -129,9 +156,11 @@ class NLU:
 
                     data["query"] = text[len(prefix):].strip()
 
-                    break
+                    return data
 
-        elif intent == "search":
+        # ---------------- Search ---------------- #
+
+        if intent == "search":
 
             prefixes = [
                 "search",
@@ -147,26 +176,30 @@ class NLU:
 
                     data["query"] = text[len(prefix):].strip()
 
-                    break
+                    return data
 
-        elif intent == "open":
+        # ---------------- Open ---------------- #
+
+        if intent == "open":
 
             prefixes = [
-                "open",
-                "launch",
-                "start",
-                "run"
+                "open"
             ]
 
             for prefix in prefixes:
 
                 if text.startswith(prefix):
 
-                    data["app"] = text[len(prefix):].strip()
+                    app = text[len(prefix):].strip()
 
-                    break
+                    if app:
+                        data["app"] = app
 
-        elif intent == "close":
+                    return data
+
+        # ---------------- Close ---------------- #
+
+        if intent == "close":
 
             prefixes = [
                 "close",
@@ -178,12 +211,16 @@ class NLU:
 
                 if text.startswith(prefix):
 
-                    data["app"] = text[len(prefix):].strip()
+                    app = text[len(prefix):].strip()
 
-                    break
+                    if app:
+                        data["app"] = app
+
+                    return data
 
         return data
-        # ---------------- Helper Functions ---------------- #
+
+    # ------------------------------------------------ #
 
     def is_greeting(self, text):
         return self.intent(text) == "greeting"

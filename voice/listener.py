@@ -9,6 +9,7 @@ from brain.nlu import nlu
 from brain.followup import followup
 from brain.multi_command import multi
 from brain.context import context
+from brain.speech_cleaner import speech_cleaner
 
 sleep_mode = False
 
@@ -26,40 +27,52 @@ def start_listening():
         if not command:
             continue
 
+        # -------- Speech Cleaning -------- #
+
+        command = speech_cleaner.clean(command)
+
         command = nlu.normalize(command)
 
         # Ignore garbage words
-        if command in [
+
+        if command in {
+
             "",
             "the",
             "a",
             "an",
             "uh",
+            "um",
             "hmm",
-            "um"
-        ]:
+            "huh",
+            "okay"
+
+        }:
             continue
 
         print("👤 You:", command)
 
-        # ---------------- Exit ---------------- #
+        # -------- Exit -------- #
 
-        if command in [
+        if command in {
+
             "exit",
             "quit",
             "stop",
             "close",
+            "goodbye",
             "stop listening",
             "band ho jao",
-            "so jao",
-            "goodbye"
-        ]:
+            "so jao"
+
+        }:
 
             speak("Good night, Sir.")
-            print("ARIS Offline")
-            break
 
-        # ---------------- Special ---------------- #
+            print("ARIS Offline")
+
+            break
+            # -------- Special Voice Commands -------- #
 
         action = special_voice_command(command)
 
@@ -71,7 +84,7 @@ def start_listening():
 
             continue
 
-        # ---------------- Sleep ---------------- #
+        # -------- Sleep Mode -------- #
 
         if sleep_mode:
 
@@ -83,14 +96,15 @@ def start_listening():
 
             continue
 
-        # ---------------- Wake ---------------- #
+        # -------- Wake Word -------- #
 
         if is_wake_word(command):
 
             speak("Hello Sir.")
+
             continue
 
-        # ---------------- FollowUp ---------------- #
+        # -------- Follow Up -------- #
 
         resolved = followup.resolve(command)
 
@@ -100,7 +114,7 @@ def start_listening():
 
             print("🤖 ARIS (FollowUp):", command)
 
-        # ---------------- Multi Command ---------------- #
+        # -------- Multi Commands -------- #
 
         commands = multi.split(command)
 

@@ -1,5 +1,5 @@
 """
-ARIS V16.2 Smart App Launcher
+ARIS V16.5 Smart App Launcher
 Author : Raj Babu Mishra
 """
 
@@ -7,11 +7,12 @@ import os
 import subprocess
 
 from system.app_database import load_apps
+from system.app_alias import normalize_app
 
 
 def launch(app):
 
-    app = app.lower().strip()
+    app = normalize_app(app)
 
     apps = load_apps()
 
@@ -22,23 +23,44 @@ def launch(app):
 
     try:
 
-        # Windows URI Commands
-        if target.startswith("start "):
+        # ---------------- Windows URI ---------------- #
 
-            os.system(target)
+        if target.startswith("ms-settings:"):
 
-            return f"Opening {app.title()}."
+            os.startfile(target)
 
-        # Full Path
+            return "Opening Settings."
+
+        if target.startswith("microsoft.windows.camera:"):
+
+            os.startfile(target)
+
+            return "Opening Camera."
+
+        if target.startswith("ms-photos:"):
+
+            os.startfile(target)
+
+            return "Opening Photos."
+
+        if target.startswith("ms-windows-store:"):
+
+            os.startfile(target)
+
+            return "Opening Microsoft Store."
+
+        # ---------------- Executable Path ---------------- #
+
         if os.path.isabs(target):
 
             os.startfile(target)
 
             return f"Opening {app.title()}."
 
-        # Executable Name
+        # ---------------- Executable Name ---------------- #
+
         subprocess.Popen(
-            [target],
+            target,
             shell=False
         )
 

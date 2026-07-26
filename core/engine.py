@@ -9,6 +9,7 @@ from brain.router import router
 from brain.reasoning import reasoning
 from brain.decision import decision
 from brain.planner import planner
+from brain.command_recovery import command_recovery
 
 from core.memory import memory
 from core.commands import execute
@@ -45,6 +46,8 @@ class Engine:
         # NLU
 
         text = nlu.normalize(command)
+
+        text = command_recovery.recover(text)
 
         intent = nlu.intent(text)
 

@@ -1,5 +1,7 @@
 {
     "chrome": "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
+    "browser": "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
+    "google chrome": "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
 
     "vscode": "code",
     "vs code": "code",
@@ -13,13 +15,17 @@
     "powershell": "powershell",
 
     "explorer": "explorer",
+    "this pc": "explorer",
 
-    "settings": "start ms-settings:",
+    "settings": "ms-settings:",
 
     "task manager": "taskmgr",
     "control panel": "control",
 
-    "camera": "start microsoft.windows.camera:",
-    "photos": "start ms-photos:",
-    "snipping tool": "snippingtool"
+    "camera": "microsoft.windows.camera:",
+    "photos": "ms-photos:",
+    "snipping tool": "snippingtool",
+
+    "store": "ms-windows-store:",
+    "microsoft store": "ms-windows-store:"
 }
