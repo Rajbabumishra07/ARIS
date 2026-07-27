@@ -1,5 +1,5 @@
 """
-ARIS V15 Core Engine
+ARIS V17.2 Stable Core Engine
 Author : Raj Babu Mishra
 """
 
@@ -23,12 +23,10 @@ class Engine:
         self.memory = memory
 
         self.last_command = ""
-
         self.last_intent = ""
-
         self.last_response = ""
 
-    # ---------------- Main ---------------- #
+    # ------------------------------------------------ #
 
     def process(self, command):
 
@@ -54,7 +52,6 @@ class Engine:
         entities = nlu.entities(text)
 
         self.last_command = text
-
         self.last_intent = intent
 
         # Planner
@@ -150,7 +147,9 @@ class Engine:
 
             self.memory.remember(query)
 
-            self.last_response = "Sir, I have remembered it."
+            self.last_response = (
+                "Sir, I have remembered it."
+            )
 
             return self.last_response
 
@@ -172,9 +171,30 @@ class Engine:
 
             else:
 
-                self.last_response = "Sir, I couldn't find anything."
+                self.last_response = (
+                    "Sir, I couldn't find anything."
+                )
 
             return self.last_response
+
+        # ---------------- Window & App Commands ---------------- #
+
+        if intent in (
+            "open",
+            "close",
+            "minimize",
+            "maximize",
+            "restore",
+            "switch"
+        ):
+
+            response = execute(text)
+
+            if response:
+
+                self.last_response = response
+
+                return response
 
         # ---------------- Exit ---------------- #
 
@@ -191,8 +211,7 @@ class Engine:
             self.last_response = response
 
             return response
-
-        # ---------------- Planner ---------------- #
+            # ---------------- Planner ---------------- #
 
         if plan:
 
@@ -203,6 +222,22 @@ class Engine:
                 self.last_response = step
 
                 return step
+
+        # ---------------- Context Reply ---------------- #
+
+        try:
+
+            previous = context.last_response()
+
+            if previous:
+
+                self.last_response = previous
+
+                return previous
+
+        except Exception:
+
+            pass
 
         # ---------------- Unknown ---------------- #
 

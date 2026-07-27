@@ -1,5 +1,5 @@
 """
-ARIS V16.1 Smart Intent Engine
+ARIS V17 Smart Intent Engine
 Author : Raj Babu Mishra
 """
 
@@ -21,8 +21,8 @@ INTENTS = {
         "exit",
         "quit",
         "stop",
-        "goodbye",
-        "bye"
+        "bye",
+        "goodbye"
     ],
 
     "again": [
@@ -35,45 +35,41 @@ INTENTS = {
     "ask_name": [
         "who are you",
         "what is your name",
-        "what's your name",
         "whats your name",
+        "what's your name",
         "tell me your name"
     ],
 
     "ask_my_name": [
         "what is my name",
-        "what's my name",
         "whats my name",
+        "what's my name",
         "tell me my name",
-        "do you know my name",
-        "who am i"
+        "who am i",
+        "do you know my name"
     ],
 
     "ask_favorite_color": [
         "what is my favorite color",
-        "what's my favorite color",
         "whats my favorite color",
-        "tell me my favorite color",
-        "do you know my favorite color"
+        "what's my favorite color",
+        "tell me my favorite color"
     ],
 
     "remember": [
         "remember",
-        "remember my",
         "save",
-        "save my",
         "store",
-        "store my",
-        "note",
-        "memorize"
+        "memorize",
+        "note"
     ],
 
     "search": [
         "search",
         "search for",
         "find",
-        "look for",
-        "google"
+        "google",
+        "look for"
     ],
 
     "open": [
@@ -87,6 +83,23 @@ INTENTS = {
         "close",
         "terminate",
         "kill"
+    ],
+
+    "minimize": [
+        "minimize"
+    ],
+
+    "maximize": [
+        "maximize"
+    ],
+
+    "restore": [
+        "restore"
+    ],
+
+    "switch": [
+        "switch",
+        "switch to"
     ]
 }
 
@@ -94,6 +107,44 @@ INTENTS = {
 def match_intent(text):
 
     text = text.lower().strip()
+
+    words = text.split()
+
+    # -------- Highest Priority Commands -------- #
+
+    if words:
+
+        first = words[0]
+
+        priority = {
+            "open": "open",
+            "launch": "open",
+            "start": "open",
+            "run": "open",
+
+            "close": "close",
+
+            "minimize": "minimize",
+            "maximize": "maximize",
+            "restore": "restore",
+
+            "switch": "switch"
+        }
+
+        if first in priority:
+            return priority[first]
+
+    # -------- Exact Match -------- #
+
+    for intent, patterns in INTENTS.items():
+
+        for pattern in patterns:
+
+            if text == pattern.lower():
+
+                return intent
+
+    # -------- Smart Fuzzy Match -------- #
 
     best_intent = None
     best_score = 0
@@ -104,26 +155,7 @@ def match_intent(text):
 
             pattern = pattern.lower()
 
-            if text == pattern:
-                return intent
-
             score = 0
-
-            if text.startswith(pattern):
-                score += 100
-
-            elif pattern.startswith(text):
-                score += 80
-
-            elif pattern in text:
-                score += 60
-
-            pattern_words = pattern.split()
-
-            for word in pattern_words:
-
-                if word in text:
-                    score += 15
 
             similarity = SequenceMatcher(
                 None,
@@ -131,16 +163,19 @@ def match_intent(text):
                 pattern
             ).ratio()
 
-            score += int(similarity * 40)
-            if score > best_score:
+            score += int(similarity * 20)
 
+            if pattern in text:
+                score += 20
+
+            if score > best_score:
                 best_score = score
                 best_intent = intent
 
-    if best_score < 25:
-        return None
+    if best_score >= 45:
+        return best_intent
 
-    return best_intent
+    return None
 
 
 def has_intent(text, intent_name):
@@ -150,40 +185,12 @@ def has_intent(text, intent_name):
 
 def get_score(text):
 
-    text = text.lower().strip()
-
     scores = {}
 
-    for intent, patterns in INTENTS.items():
+    for intent in INTENTS:
 
-        best = 0
-
-        for pattern in patterns:
-
-            pattern = pattern.lower()
-
-            score = 0
-
-            if text == pattern:
-                score = 100
-
-            elif text.startswith(pattern):
-                score = 90
-
-            elif pattern in text:
-                score = 70
-
-            similarity = SequenceMatcher(
-                None,
-                text,
-                pattern
-            ).ratio()
-
-            score += int(similarity * 30)
-
-            if score > best:
-                best = score
-
-        scores[intent] = best
+        scores[intent] = (
+            100 if match_intent(text) == intent else 0
+        )
 
     return scores

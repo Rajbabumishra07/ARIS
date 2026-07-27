@@ -13,6 +13,7 @@ from system.website_manager import open_website
 from system.system_manager import execute_system
 from system.media_manager import play_media
 from system.app_launcher import launch
+from system.window_manager import window
 
 from brain.action_memory import action_memory
 
@@ -41,6 +42,51 @@ def execute(command):
         target = command.split(" ", 1)[1].strip()
 
         action_memory.remember("play", target)
+
+        # ---------------- Window Manager ---------------- #
+
+    if command.startswith("minimize "):
+
+        app = command.replace("minimize ", "").strip()
+
+        if window.minimize(app):
+
+            return f"Minimized {app.title()}."
+
+        return f"I couldn't find {app.title()}."
+
+
+    if command.startswith("maximize "):
+
+        app = command.replace("maximize ", "").strip()
+
+        if window.maximize(app):
+
+            return f"Maximized {app.title()}."
+
+        return f"I couldn't find {app.title()}."
+
+
+    if command.startswith("restore "):
+
+        app = command.replace("restore ", "").strip()
+
+        if window.restore(app):
+
+            return f"Restored {app.title()}."
+
+        return f"I couldn't find {app.title()}."
+
+
+    if command.startswith("switch to "):
+
+        app = command.replace("switch to ", "").strip()
+
+        if window.activate(app):
+
+            return f"Switched to {app.title()}."
+
+        return f"I couldn't find {app.title()}."
 
     # ---------------- Smart Launcher ---------------- #
 

@@ -1,12 +1,11 @@
 """
-ARIS V17 Natural Language Understanding Engine
+ARIS V17 Smart NLU
 Author : Raj Babu Mishra
 """
 
 import re
 
 from brain.intent_patterns import match_intent
-from brain.entities import entities
 
 
 class NLU:
@@ -14,32 +13,15 @@ class NLU:
     def __init__(self):
 
         self.filler_words = {
-
-            "the",
-            "a",
-            "an",
-
-            "please",
-            "pls",
-            "plz",
-
-            "sir",
-            "hey",
-
-            "ok",
-            "okay",
-
-            "can",
-            "could",
-            "would",
-
-            "kindly",
-            "just"
+            "the", "a", "an",
+            "please", "pls", "plz",
+            "sir", "hey", "ok", "okay",
+            "can", "could", "would",
+            "kindly", "just"
         }
 
         self.replacements = {
 
-            # Hindi
             "yaad rakho": "remember",
             "yaad rakhna": "remember",
 
@@ -61,26 +43,19 @@ class NLU:
             "mera city": "my city",
 
             "colour": "color",
-            "favourite": "favorite",
-
-            # Launcher
-            "launch": "open",
-            "run": "open",
-            "start": "open"
+            "favourite": "favorite"
         }
 
-    # ------------------------------------------------ #
+    # ---------------- Normalize ---------------- #
 
     def normalize(self, text):
 
         text = text.lower().strip()
 
         for old, new in self.replacements.items():
-
             text = text.replace(old, new)
 
         text = re.sub(r"[^a-z0-9 ]+", " ", text)
-
         text = re.sub(r"\s+", " ", text)
 
         words = []
@@ -94,20 +69,15 @@ class NLU:
 
         return " ".join(words)
 
-    # ------------------------------------------------ #
+    # ---------------- Intent ---------------- #
 
     def intent(self, text):
 
         text = self.normalize(text)
 
-        intent = match_intent(text)
+        return match_intent(text)
 
-        if intent:
-            return intent
-
-        return "conversation"
-
-    # ------------------------------------------------ #
+    # ---------------- Entities ---------------- #
 
     def entities(self, text):
 
@@ -116,29 +86,99 @@ class NLU:
         intent = self.intent(text)
 
         data = {
-
             "intent": intent,
-
             "text": text,
-
             "query": "",
-
             "app": ""
-
         }
 
-        # ---------------- Dynamic App Detection ---------------- #
+        # ---------- OPEN ----------
 
-        apps = entities.get_all_apps()
+        if intent == "open":
 
-        for app in sorted(apps, key=len, reverse=True):
+            prefixes = [
+                "open",
+                "launch",
+                "start",
+                "run"
+            ]
 
-            if app in text:
+            for p in prefixes:
 
-                data["app"] = app
+                if text.startswith(p):
 
-                break
-                # ---------------- Remember ---------------- #
+                    data["app"] = text[len(p):].strip()
+
+                    return data
+
+        # ---------- CLOSE ----------
+
+        if intent == "close":
+
+            if text.startswith("close"):
+
+                data["app"] = text.replace("close", "", 1).strip()
+
+                return data
+
+        # ---------- MINIMIZE ----------
+
+        if intent == "minimize":
+
+            data["app"] = text.replace("minimize", "", 1).strip()
+
+            return data
+
+        # ---------- MAXIMIZE ----------
+
+        if intent == "maximize":
+
+            data["app"] = text.replace("maximize", "", 1).strip()
+
+            return data
+
+        # ---------- RESTORE ----------
+
+        if intent == "restore":
+
+            data["app"] = text.replace("restore", "", 1).strip()
+
+            return data
+
+        # ---------- SWITCH ----------
+
+        if intent == "switch":
+
+            app = text
+
+            app = app.replace("switch to", "")
+            app = app.replace("switch", "")
+
+            data["app"] = app.strip()
+
+            return data
+
+        # ---------- SEARCH ----------
+
+        if intent == "search":
+
+            prefixes = [
+                "search",
+                "search for",
+                "find",
+                "google",
+                "look for"
+            ]
+
+            for p in prefixes:
+
+                if text.startswith(p):
+
+                    data["query"] = text[len(p):].strip()
+
+                    return data
+
+        # ---------- REMEMBER ----------
 
         if intent == "remember":
 
@@ -150,77 +190,17 @@ class NLU:
                 "memorize"
             ]
 
-            for prefix in prefixes:
+            for p in prefixes:
 
-                if text.startswith(prefix):
+                if text.startswith(p):
 
-                    data["query"] = text[len(prefix):].strip()
-
-                    return data
-
-        # ---------------- Search ---------------- #
-
-        if intent == "search":
-
-            prefixes = [
-                "search",
-                "search for",
-                "find",
-                "look for",
-                "google"
-            ]
-
-            for prefix in prefixes:
-
-                if text.startswith(prefix):
-
-                    data["query"] = text[len(prefix):].strip()
-
-                    return data
-
-        # ---------------- Open ---------------- #
-
-        if intent == "open":
-
-            prefixes = [
-                "open"
-            ]
-
-            for prefix in prefixes:
-
-                if text.startswith(prefix):
-
-                    app = text[len(prefix):].strip()
-
-                    if app:
-                        data["app"] = app
-
-                    return data
-
-        # ---------------- Close ---------------- #
-
-        if intent == "close":
-
-            prefixes = [
-                "close",
-                "terminate",
-                "kill"
-            ]
-
-            for prefix in prefixes:
-
-                if text.startswith(prefix):
-
-                    app = text[len(prefix):].strip()
-
-                    if app:
-                        data["app"] = app
+                    data["query"] = text[len(p):].strip()
 
                     return data
 
         return data
 
-    # ------------------------------------------------ #
+    # ---------------- Helper ---------------- #
 
     def is_greeting(self, text):
         return self.intent(text) == "greeting"
@@ -231,17 +211,29 @@ class NLU:
     def is_again(self, text):
         return self.intent(text) == "again"
 
-    def is_remember(self, text):
-        return self.intent(text) == "remember"
-
-    def is_search(self, text):
-        return self.intent(text) == "search"
-
     def is_open(self, text):
         return self.intent(text) == "open"
 
     def is_close(self, text):
         return self.intent(text) == "close"
+
+    def is_minimize(self, text):
+        return self.intent(text) == "minimize"
+
+    def is_maximize(self, text):
+        return self.intent(text) == "maximize"
+
+    def is_restore(self, text):
+        return self.intent(text) == "restore"
+
+    def is_switch(self, text):
+        return self.intent(text) == "switch"
+
+    def is_search(self, text):
+        return self.intent(text) == "search"
+
+    def is_remember(self, text):
+        return self.intent(text) == "remember"
 
     def is_ask_name(self, text):
         return self.intent(text) == "ask_name"
