@@ -1,5 +1,11 @@
-import json
+"""
+ARIS V17 Stable App Manager
+Author : Raj Babu Mishra
+"""
+
 import os
+import json
+import subprocess
 
 
 APP_DB = "database/apps.json"
@@ -26,12 +32,24 @@ def open_application(command):
 
             try:
 
-                os.system(f"start {exe}")
+                # Absolute executable path
+                if os.path.isabs(exe):
 
-                return f"Opening {app}"
+                    os.startfile(exe)
 
-            except:
+                else:
 
-                return f"Unable to open {app}"
+                    subprocess.Popen(
+                        exe,
+                        shell=False
+                    )
+
+                return f"Opening {app.title()}."
+
+            except Exception as e:
+
+                print("App Manager Error:", e)
+
+                return f"Unable to open {app.title()}."
 
     return None

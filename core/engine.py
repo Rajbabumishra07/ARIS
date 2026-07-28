@@ -10,6 +10,7 @@ from brain.reasoning import reasoning
 from brain.decision import decision
 from brain.planner import planner
 from brain.command_recovery import command_recovery
+from brain.speech_recovery import speech_recovery
 
 from core.memory import memory
 from core.commands import execute
@@ -45,6 +46,10 @@ class Engine:
 
         text = nlu.normalize(command)
 
+        # Speech Recovery
+        text = speech_recovery(text)
+
+        # Command Recovery
         text = command_recovery.recover(text)
 
         intent = nlu.intent(text)

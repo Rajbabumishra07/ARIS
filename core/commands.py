@@ -6,6 +6,8 @@ Author : Raj Babu Mishra
 from system.apps import open_app
 from system.browser import browser_command
 from system.files import open_folder
+from system.file_manager import file_manager
+from system.folder_operations import folder_operations
 from system.screenshot import take_screenshot
 
 from system.app_manager import open_application
@@ -88,6 +90,29 @@ def execute(command):
 
         return f"I couldn't find {app.title()}."
 
+     # ---------------- Folder Operations ---------------- #
+
+    if command.startswith("create folder "):
+
+       name = command.replace("create folder ", "").strip()
+
+       if not name:
+
+           return "Please tell me the folder name."
+
+       return folder_operations.create(name)
+
+
+    if command.startswith("make folder "):
+
+        name = command.replace("make folder ", "").strip()
+
+        if not name:
+
+            return "Please tell me the folder name."
+
+        return folder_operations.create(name)
+
     # ---------------- Smart Launcher ---------------- #
 
     if (
@@ -139,6 +164,19 @@ def execute(command):
 
     if result is not None:
         return result
+
+    # ---------------- File Manager ---------------- #
+
+    if (
+       command.startswith("open ")
+       or command.startswith("launch ")
+       or command.startswith("start ")
+       or command.startswith("run ")
+    ):
+
+      folder = command.split(" ", 1)[1].strip()
+
+      response = file_manager.open(folder)
 
     # ---------------- Browser ---------------- #
 
