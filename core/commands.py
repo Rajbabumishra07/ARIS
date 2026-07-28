@@ -9,6 +9,7 @@ from system.files import open_folder
 from system.file_manager import file_manager
 from system.folder_operations import folder_operations
 from system.screenshot import take_screenshot
+from core.file_commands import execute_file
 
 from system.app_manager import open_application
 from system.website_manager import open_website
@@ -112,6 +113,13 @@ def execute(command):
             return "Please tell me the folder name."
 
         return folder_operations.create(name)
+
+    # ---------------- File Commands ---------------- #
+
+    result = execute_file(command)
+
+    if result is not None:
+        return result
 
     # ---------------- Smart Launcher ---------------- #
 
