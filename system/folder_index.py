@@ -1,11 +1,12 @@
 """
-ARIS V17.6 Folder Index
+ARIS V17.8 Smart Folder Index
 Author : Raj Babu Mishra
 """
 
 import os
 
 from system.folder_database import load_folders
+from system.index_cache import save_cache, load_cache
 
 
 class FolderIndex:
@@ -43,6 +44,22 @@ class FolderIndex:
 
                 pass
 
+        save_cache("folders", self.index)
+
+    # ---------------- Load ---------------- #
+
+    def load(self):
+
+        cache = load_cache("folders")
+
+        if cache is None:
+
+            self.build()
+
+        else:
+
+            self.index = cache
+
     # ---------------- Find ---------------- #
 
     def find(self, name):
@@ -58,6 +75,12 @@ class FolderIndex:
     # ---------------- Reload ---------------- #
 
     def reload(self):
+
+        self.load()
+
+    # ---------------- Refresh ---------------- #
+
+    def refresh(self):
 
         self.build()
 

@@ -1,11 +1,12 @@
 """
-ARIS V17.7 Smart File Index
+ARIS V17.8 Smart File Index
 Author : Raj Babu Mishra
 """
 
 import os
 
 from system.file_database import load_locations
+from system.index_cache import save_cache, load_cache
 
 
 class FileIndex:
@@ -43,6 +44,22 @@ class FileIndex:
 
                 pass
 
+        save_cache("files", self.index)
+
+    # ---------------- Load ---------------- #
+
+    def load(self):
+
+        cache = load_cache("files")
+
+        if cache is None:
+
+            self.build()
+
+        else:
+
+            self.index = cache
+
     # ---------------- Find ---------------- #
 
     def find(self, name):
@@ -58,6 +75,12 @@ class FileIndex:
     # ---------------- Reload ---------------- #
 
     def reload(self):
+
+        self.load()
+
+    # ---------------- Refresh ---------------- #
+
+    def refresh(self):
 
         self.build()
 
