@@ -19,6 +19,7 @@ from system.app_launcher import launch
 from system.window_manager import window
 
 from brain.action_memory import action_memory
+from core.folder_commands import execute_folder
 
 
 def execute(command):
@@ -117,6 +118,13 @@ def execute(command):
     # ---------------- File Commands ---------------- #
 
     result = execute_file(command)
+
+    if result is not None:
+        return result
+
+        # ---------------- Folder Commands ---------------- #
+
+    result = execute_folder(command)
 
     if result is not None:
         return result

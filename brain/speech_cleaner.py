@@ -1,5 +1,5 @@
 """
-ARIS V16.5 Smart Speech Cleaner
+ARIS V17.9 Smart Speech Cleaner
 Author : Raj Babu Mishra
 """
 
@@ -17,8 +17,8 @@ class SpeechCleaner:
 
             "launch a": "launch",
             "open a": "open",
-            "start a": "start",
-            "run a": "run",
+            "start a": "open",
+            "run a": "open",
 
             "launch": "open",
             "start": "open",
@@ -28,7 +28,25 @@ class SpeechCleaner:
             "oh penn": "open",
             "o pen": "open",
             "opan": "open",
-            "opan": "open",
+
+            # -------- Conversation Fillers -------- #
+
+            "can you ": "",
+            "could you ": "",
+            "would you ": "",
+            "please ": "",
+            "kindly ": "",
+            "to ": "",
+
+            "create a ": "create ",
+            "open a ": "open ",
+            "delete a ": "delete ",
+            "rename a ": "rename ",
+            "copy a ": "copy ",
+            "move a ": "move ",
+
+            "folder named ": "folder ",
+            "file named ": "file ",
 
             # -------- Common Apps -------- #
 
@@ -58,7 +76,8 @@ class SpeechCleaner:
             "ok": "",
             "the": "",
             " a ": " ",
-            " an ": " "
+            " an ": " ",
+            " to ": " "
         }
 
         self.apps = [

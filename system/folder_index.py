@@ -76,7 +76,7 @@ class FolderIndex:
 
     def reload(self):
 
-        self.load()
+        self.build()
 
     # ---------------- Refresh ---------------- #
 
