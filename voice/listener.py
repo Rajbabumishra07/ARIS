@@ -2,21 +2,22 @@ from voice.voice_engine import get_command
 from voice.wake_word import is_wake_word
 from voice.voice_commands import special_voice_command
 
-from core.brain import process_command
-from voice.speak import speak
-
-from brain.nlu import nlu
-from brain.followup import followup
-from brain.multi_command import multi
-from brain.context import context
-from brain.speech_cleaner import speech_cleaner
-
 sleep_mode = False
 
 
 def start_listening():
 
     global sleep_mode
+
+    # -------- Lazy Imports -------- #
+    from core.brain import process_command
+    from voice.speak import speak
+
+    from brain.nlu import nlu
+    from brain.followup import followup
+    from brain.multi_command import multi
+    from brain.context import context
+    from brain.speech_cleaner import speech_cleaner
 
     print("🎤 ARIS Voice System Started")
 
@@ -30,13 +31,11 @@ def start_listening():
         # -------- Speech Cleaning -------- #
 
         command = speech_cleaner.clean(command)
-
         command = nlu.normalize(command)
 
         # Ignore garbage words
 
         if command in {
-
             "",
             "the",
             "a",
@@ -46,7 +45,6 @@ def start_listening():
             "hmm",
             "huh",
             "okay"
-
         }:
             continue
 
@@ -55,7 +53,6 @@ def start_listening():
         # -------- Exit -------- #
 
         if command in {
-
             "exit",
             "quit",
             "stop",
@@ -64,24 +61,20 @@ def start_listening():
             "stop listening",
             "band ho jao",
             "so jao"
-
         }:
 
             speak("Good night, Sir.")
-
             print("ARIS Offline")
-
             break
-            # -------- Special Voice Commands -------- #
+
+        # -------- Special Voice Commands -------- #
 
         action = special_voice_command(command)
 
         if action == "sleep":
 
             sleep_mode = True
-
             speak("Sleep mode activated, Sir.")
-
             continue
 
         # -------- Sleep Mode -------- #
@@ -91,7 +84,6 @@ def start_listening():
             if is_wake_word(command):
 
                 sleep_mode = False
-
                 speak("Yes Sir.")
 
             continue
@@ -101,7 +93,6 @@ def start_listening():
         if is_wake_word(command):
 
             speak("Hello Sir.")
-
             continue
 
         # -------- Follow Up -------- #
@@ -111,7 +102,6 @@ def start_listening():
         if resolved:
 
             command = resolved
-
             print("🤖 ARIS (FollowUp):", command)
 
         # -------- Multi Commands -------- #
@@ -132,13 +122,10 @@ def start_listening():
             if result == "exit":
 
                 speak("Goodbye Sir.")
-
                 print("ARIS Offline")
-
                 return
 
             if result:
 
                 print("🤖 ARIS:", result)
-
                 speak(result)

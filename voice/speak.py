@@ -17,16 +17,12 @@ VOICE = "en-US-AndrewNeural"
 
 pygame.mixer.init()
 
-offline = pyttsx3.init()
-
-offline.setProperty("rate", 180)
-
 
 def offline_speak(text):
-
-    offline.say(str(text))
-
-    offline.runAndWait()
+    engine = pyttsx3.init()
+    engine.setProperty("rate", 180)
+    engine.say(str(text))
+    engine.runAndWait()
 
 
 def speak(text):
@@ -43,7 +39,6 @@ def speak(text):
             day, month, year = text.split("-")
 
             months = {
-
                 "01": "January",
                 "02": "February",
                 "03": "March",
@@ -56,47 +51,34 @@ def speak(text):
                 "10": "October",
                 "11": "November",
                 "12": "December"
-
             }
 
             if month in months:
-
                 text = f"{int(day)} {months[month]} {year}"
 
         except Exception:
-
             pass
 
     fd, filename = tempfile.mkstemp(suffix=".mp3")
-
     os.close(fd)
 
     try:
 
         async def _tts():
-
             communicate = edge_tts.Communicate(
-
                 text=text,
-
                 voice=VOICE,
-
                 rate="+15%",
-
                 volume="+40%"
-
             )
-
             await communicate.save(filename)
 
         asyncio.run(_tts())
 
         pygame.mixer.music.load(filename)
-
         pygame.mixer.music.play()
 
         while pygame.mixer.music.get_busy():
-
             pygame.time.Clock().tick(10)
 
         pygame.mixer.music.unload()
@@ -104,11 +86,8 @@ def speak(text):
     except Exception as e:
 
         print()
-
         print("⚠ Edge TTS Failed")
-
         print(e)
-
         print("🔊 Switching to Offline Voice")
 
         offline_speak(text)
@@ -116,11 +95,8 @@ def speak(text):
     finally:
 
         try:
-
             os.remove(filename)
-
         except Exception:
-
             pass
 
         state.SPEAKING = False
