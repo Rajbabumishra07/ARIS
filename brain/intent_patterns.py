@@ -1,5 +1,5 @@
 """
-ARIS V17 Smart Intent Engine
+ARIS V17.8 Smart Intent Engine
 Author : Raj Babu Mishra
 """
 
@@ -56,6 +56,47 @@ INTENTS = {
         "tell me my favorite color"
     ],
 
+    "ask_creator": [
+        "who created you",
+        "who made you",
+        "who is your creator",
+        "who developed you"
+    ],
+
+    "ask_owner": [
+        "who is your owner",
+        "who owns you",
+        "who is your master"
+    ],
+
+    "ask_version": [
+        "what is your version",
+        "tell me your version",
+        "your version",
+        "version"
+    ],
+
+    "ask_identity": [
+        "what is aris",
+        "tell me about yourself",
+        "introduce yourself",
+        "introduce",
+        "about yourself"
+    ],
+
+    "ask_purpose": [
+        "why were you created",
+        "what is your purpose",
+        "what can you do",
+        "why do you exist"
+    ],
+
+    "ask_full_form": [
+        "full form of aris",
+        "what does aris stand for",
+        "aris full form"
+    ],
+
     "remember": [
         "remember",
         "save",
@@ -110,8 +151,6 @@ def match_intent(text):
 
     words = text.split()
 
-    # -------- Highest Priority Commands -------- #
-
     if words:
 
         first = words[0]
@@ -121,30 +160,22 @@ def match_intent(text):
             "launch": "open",
             "start": "open",
             "run": "open",
-
             "close": "close",
-
             "minimize": "minimize",
             "maximize": "maximize",
             "restore": "restore",
-
             "switch": "switch"
         }
 
         if first in priority:
             return priority[first]
 
-    # -------- Exact Match -------- #
-
     for intent, patterns in INTENTS.items():
 
         for pattern in patterns:
 
             if text == pattern.lower():
-
                 return intent
-
-    # -------- Smart Fuzzy Match -------- #
 
     best_intent = None
     best_score = 0
@@ -179,7 +210,6 @@ def match_intent(text):
 
 
 def has_intent(text, intent_name):
-
     return match_intent(text) == intent_name
 
 
@@ -188,7 +218,6 @@ def get_score(text):
     scores = {}
 
     for intent in INTENTS:
-
         scores[intent] = (
             100 if match_intent(text) == intent else 0
         )

@@ -6,65 +6,78 @@ def browser_command(command):
 
     command = command.lower().strip()
 
-    # ---------- Google ----------
+    # ---------- Google Search ----------
 
     if command.startswith("search "):
 
-        query = command.replace("search", "", 1).strip()
+        query = command[7:].strip()
 
-        webbrowser.open(
-            f"https://www.google.com/search?q={quote(query)}"
-        )
+        if query:
+            webbrowser.open(
+                f"https://www.google.com/search?q={quote(query)}"
+            )
+            return f"Searching Google for {query}"
 
-        return f"Searching Google for {query}"
+        return None
 
     if command.startswith("google "):
 
-        query = command.replace("google", "", 1).strip()
+        query = command[7:].strip()
 
-        webbrowser.open(
-            f"https://www.google.com/search?q={quote(query)}"
-        )
+        if query:
+            webbrowser.open(
+                f"https://www.google.com/search?q={quote(query)}"
+            )
+            return f"Searching Google for {query}"
 
-        return f"Searching Google for {query}"
+        return None
 
-    # ---------- YouTube ----------
+    # ---------- YouTube Search ----------
 
     if command.startswith("youtube "):
 
-        query = command.replace("youtube", "", 1).strip()
+        query = command[8:].strip()
 
-        webbrowser.open(
-            f"https://www.youtube.com/results?search_query={quote(query)}"
-        )
+        if query:
+            webbrowser.open(
+                f"https://www.youtube.com/results?search_query={quote(query)}"
+            )
+            return f"Searching YouTube for {query}"
 
-        return f"Searching YouTube for {query}"
+        return None
 
     if command.startswith("play "):
 
-        song = command.replace("play", "", 1).strip()
+        song = command[5:].strip()
 
-        webbrowser.open(
-            f"https://www.youtube.com/results?search_query={quote(song)}"
-        )
+        if song:
+            webbrowser.open(
+                f"https://www.youtube.com/results?search_query={quote(song)}"
+            )
+            return f"Playing {song}"
 
-        return f"Playing {song}"
+        return None
 
-    # ---------- Websites ----------
+    # ---------- Open Website ----------
 
     websites = {
-        "youtube": "https://youtube.com",
-        "google": "https://google.com",
-        "gmail": "https://mail.google.com",
-        "github": "https://github.com",
-        "chatgpt": "https://chatgpt.com",
-        "wikipedia": "https://wikipedia.org"
+        "open youtube": "https://youtube.com",
+        "open google": "https://google.com",
+        "open gmail": "https://mail.google.com",
+        "open github": "https://github.com",
+        "open chatgpt": "https://chatgpt.com",
+        "open wikipedia": "https://wikipedia.org",
+        "browser": None,
+        "open browser": None
     }
 
     if command in websites:
 
+        if websites[command] is None:
+            return None
+
         webbrowser.open(websites[command])
 
-        return f"Opening {command.title()}"
+        return f"Opening {command.replace('open ', '').title()}"
 
     return None

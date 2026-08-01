@@ -1,5 +1,5 @@
 """
-ARIS V17.2 Stable Core Engine
+ARIS V18.0 Stable Core Engine
 Author : Raj Babu Mishra
 """
 
@@ -27,6 +27,13 @@ class Engine:
         self.last_intent = ""
         self.last_response = ""
 
+        # V18 Pipeline State
+
+        self.last_plan = None
+        self.last_reasoning = None
+        self.last_decision = None
+        self.last_route = None
+
     # ------------------------------------------------ #
 
     def process(self, command):
@@ -36,20 +43,22 @@ class Engine:
         if not command:
             return None
 
-        # Context
+        # ---------------- Context ---------------- #
 
         context.remember(command)
 
         command = context.resolve(command)
 
-        # NLU
+        # ---------------- NLU ---------------- #
 
         text = nlu.normalize(command)
 
-        # Speech Recovery
+        # ---------------- Speech Recovery ---------------- #
+
         text = speech_recovery(text)
 
-        # Command Recovery
+        # ---------------- Command Recovery ---------------- #
+
         text = command_recovery.recover(text)
 
         intent = nlu.intent(text)
@@ -59,21 +68,25 @@ class Engine:
         self.last_command = text
         self.last_intent = intent
 
-        # Planner
+        # ---------------- Planner ---------------- #
 
         plan = planner.create_plan(text)
+        self.last_plan = plan
 
-        # Decision
+        # ---------------- Decision ---------------- #
 
-        decision.decide(text)
+        decision_result = decision.decide(text)
+        self.last_decision = decision_result
 
-        # Reasoning
+        # ---------------- Reasoning ---------------- #
 
-        reasoning.think(text)
+        reasoning_result = reasoning.think(text)
+        self.last_reasoning = reasoning_result
 
-        # Router
+        # ---------------- Router ---------------- #
 
-        router.route(text)
+        route_result = router.route(text)
+        self.last_route = route_result
 
         # ---------------- Greeting ---------------- #
 
@@ -91,6 +104,54 @@ class Engine:
                 f"{aris.greeting}\n"
                 f"My name is {aris.name}."
             )
+
+            return self.last_response
+
+        # ---------------- Creator ---------------- #
+
+        if intent == "ask_creator":
+
+            self.last_response = aris.creator_info()
+
+            return self.last_response
+
+        # ---------------- Owner ---------------- #
+
+        if intent == "ask_owner":
+
+            self.last_response = aris.owner_info()
+
+            return self.last_response
+
+        # ---------------- Version ---------------- #
+
+        if intent == "ask_version":
+
+            self.last_response = aris.version_info()
+
+            return self.last_response
+
+        # ---------------- Identity ---------------- #
+
+        if intent == "ask_identity":
+
+            self.last_response = aris.introduce()
+
+            return self.last_response
+
+        # ---------------- Purpose ---------------- #
+
+        if intent == "ask_purpose":
+
+            self.last_response = aris.purpose_info()
+
+            return self.last_response
+
+        # ---------------- Full Form ---------------- #
+
+        if intent == "ask_full_form":
+
+            self.last_response = aris.full_form_info()
 
             return self.last_response
 
@@ -140,7 +201,8 @@ class Engine:
                 )
 
             return self.last_response
-            # ---------------- Remember ---------------- #
+
+        # ---------------- Remember ---------------- #
 
         if intent == "remember":
 
@@ -216,11 +278,18 @@ class Engine:
             self.last_response = response
 
             return response
+
             # ---------------- Planner ---------------- #
 
-        if plan:
+        planner_intents = {
+            "plan",
+            "planning",
+            "goal"
+        }
 
-            step = planner.next_step(plan)
+        if intent in planner_intents:
+
+            step = planner.next_step(self.last_plan)
 
             if step:
 
