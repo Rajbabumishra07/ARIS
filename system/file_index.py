@@ -1,12 +1,16 @@
 """
-ARIS V17.8 Smart File Index
+ARIS V18 Smart File Index
 Author : Raj Babu Mishra
 """
 
+import json
 import os
 
 from system.file_database import load_locations
-from system.index_cache import save_cache, load_cache
+
+
+CACHE_DIR = "cache"
+CACHE_FILE = os.path.join(CACHE_DIR, "file_index.json")
 
 
 class FileIndex:
@@ -14,6 +18,41 @@ class FileIndex:
     def __init__(self):
 
         self.index = {}
+        self.loaded = False
+
+    # ---------------- Cache ---------------- #
+
+    def _load_cache(self):
+
+        if not os.path.exists(CACHE_FILE):
+            return False
+
+        try:
+
+            with open(CACHE_FILE, "r", encoding="utf-8") as f:
+
+                self.index = json.load(f)
+
+            return True
+
+        except Exception:
+
+            self.index = {}
+
+            return False
+
+    def _save_cache(self):
+
+        os.makedirs(CACHE_DIR, exist_ok=True)
+
+        with open(CACHE_FILE, "w", encoding="utf-8") as f:
+
+            json.dump(
+                self.index,
+                f,
+                indent=2,
+                ensure_ascii=False
+            )
 
     # ---------------- Build ---------------- #
 
@@ -25,44 +64,49 @@ class FileIndex:
 
         for base in locations.values():
 
-            if not os.path.exists(base):
+            if not os.path.isdir(base):
                 continue
 
             try:
 
-                for root, dirs, files in os.walk(base):
+                for root, _, files in os.walk(base):
 
                     for file in files:
 
-                        name = file.lower()
+                        key = file.lower()
 
-                        if name not in self.index:
+                        if key not in self.index:
 
-                            self.index[name] = os.path.join(root, file)
+                            self.index[key] = os.path.join(root, file)
 
             except Exception:
 
                 pass
 
-        save_cache("files", self.index)
+        self._save_cache()
 
-    # ---------------- Load ---------------- #
+        self.loaded = True
 
-    def load(self):
+    # ---------------- Ensure ---------------- #
 
-        cache = load_cache("files")
+    def ensure_loaded(self):
 
-        if cache is None:
+        if self.loaded:
+            return
 
-            self.build()
+        if self._load_cache():
 
-        else:
+            self.loaded = True
 
-            self.index = cache
+            return
+
+        self.build()
 
     # ---------------- Find ---------------- #
 
     def find(self, name):
+
+        self.ensure_loaded()
 
         return self.index.get(name.lower())
 
@@ -70,19 +114,45 @@ class FileIndex:
 
     def exists(self, name):
 
+        self.ensure_loaded()
+
         return name.lower() in self.index
+
+    # ---------------- Update ---------------- #
+
+    def add(self, path):
+
+        self.ensure_loaded()
+
+        name = os.path.basename(path).lower()
+
+        self.index[name] = path
+
+        self._save_cache()
+
+    def remove(self, name):
+
+        self.ensure_loaded()
+
+        self.index.pop(name.lower(), None)
+
+        self._save_cache()
+
+    def rename(self, old_name, new_path):
+
+        self.ensure_loaded()
+
+        self.index.pop(old_name.lower(), None)
+
+        self.index[os.path.basename(new_path).lower()] = new_path
+
+        self._save_cache()
 
     # ---------------- Reload ---------------- #
 
     def reload(self):
 
-        self.load()
-
-    # ---------------- Refresh ---------------- #
-
-    def refresh(self):
-
-        self.build()
+        self.loaded = False
 
 
 file_index = FileIndex()

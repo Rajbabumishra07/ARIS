@@ -1,16 +1,35 @@
 """
-ARIS V14 - Brain Router
+ARIS V18 Brain Router
+Author : Raj Babu Mishra
 """
 
-from core.engine import engine
+import time
+
+_engine = None
+
+
+def _get_engine():
+
+    global _engine
+
+    if _engine is None:
+
+        t = time.perf_counter()
+
+        from core.engine import engine
+
+        print(
+            f"⚡ Engine Import : {time.perf_counter()-t:.2f}s"
+        )
+
+        _engine = engine
+
+    return _engine
 
 
 def process_command(command):
-    """
-    Router Only
-    """
 
     if not command:
         return None
 
-    return engine.process(command)
+    return _get_engine().process(command)

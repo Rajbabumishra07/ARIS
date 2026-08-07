@@ -1,6 +1,8 @@
 import os
 import json
 import queue
+import time
+
 import sounddevice as sd
 from vosk import Model, KaldiRecognizer
 
@@ -12,16 +14,42 @@ MODEL_PATH = os.path.join(
     "vosk-model-small-en-in-0.4"
 )
 
-model = Model(MODEL_PATH)
+# ---------------- Lazy Load ---------------- #
 
-recognizer = KaldiRecognizer(model, 16000)
-recognizer.SetWords(True)
-
-# Ignore very small noises
-recognizer.SetPartialWords(False)
+_model = None
+_recognizer = None
 
 
-def callback(indata, frames, time, status):
+def _init_voice():
+
+    global _model, _recognizer
+
+    if _model is not None:
+        return
+
+    total = time.perf_counter()
+
+    print("⚡ Loading Voice Model...")
+
+    t = time.perf_counter()
+
+    _model = Model(MODEL_PATH)
+
+    print(f"📦 Model Loaded : {time.perf_counter()-t:.2f}s")
+
+    t = time.perf_counter()
+
+    _recognizer = KaldiRecognizer(_model, 16000)
+
+    print(f"🎤 Recognizer : {time.perf_counter()-t:.2f}s")
+
+    _recognizer.SetWords(True)
+    _recognizer.SetPartialWords(False)
+
+    print(f"✅ Voice Ready ({time.perf_counter()-total:.2f}s)")
+
+
+def callback(indata, frames, time_info, status):
 
     if status:
         return
@@ -56,6 +84,8 @@ def clean_text(text):
 
 def get_command():
 
+    _init_voice()
+
     while not q.empty():
         q.get()
 
@@ -76,9 +106,9 @@ def get_command():
 
             data = q.get()
 
-            if recognizer.AcceptWaveform(data):
+            if _recognizer.AcceptWaveform(data):
 
-                result = json.loads(recognizer.Result())
+                result = json.loads(_recognizer.Result())
 
                 text = clean_text(
                     result.get("text", "")

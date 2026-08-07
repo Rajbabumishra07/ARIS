@@ -1,5 +1,5 @@
 """
-ARIS V17 Smart NLU
+ARIS V18 Smart NLU
 Author : Raj Babu Mishra
 """
 
@@ -46,7 +46,22 @@ class NLU:
             "favourite": "favorite"
         }
 
-    # ---------------- Normalize ---------------- #
+    # ------------------------------------------------ #
+    # Protected Token Check
+    # ------------------------------------------------ #
+
+    def _is_file_or_path(self, word):
+
+        return (
+            "." in word
+            or "\\" in word
+            or "/" in word
+            or ":" in word
+        )
+
+    # ------------------------------------------------ #
+    # Normalize
+    # ------------------------------------------------ #
 
     def normalize(self, text):
 
@@ -55,12 +70,39 @@ class NLU:
         for old, new in self.replacements.items():
             text = text.replace(old, new)
 
-        text = re.sub(r"[^a-z0-9 ]+", " ", text)
-        text = re.sub(r"\s+", " ", text)
+        # --------------------------------------------- #
+        # IMPORTANT:
+        # Preserve filenames and paths.
+        #
+        # hello.txt  -> hello.txt
+        # test.py    -> test.py
+        # C:\test    -> C:\test
+        # --------------------------------------------- #
+
+        tokens = text.split()
+
+        cleaned_tokens = []
+
+        for token in tokens:
+
+            if self._is_file_or_path(token):
+
+                cleaned_tokens.append(token)
+
+            else:
+
+                token = re.sub(
+                    r"[^a-z0-9_-]+",
+                    "",
+                    token
+                )
+
+                if token:
+                    cleaned_tokens.append(token)
 
         words = []
 
-        for word in text.split():
+        for word in cleaned_tokens:
 
             if word in self.filler_words:
                 continue
@@ -69,7 +111,9 @@ class NLU:
 
         return " ".join(words)
 
-    # ---------------- Intent ---------------- #
+    # ------------------------------------------------ #
+    # Intent
+    # ------------------------------------------------ #
 
     def intent(self, text):
 
@@ -77,7 +121,9 @@ class NLU:
 
         return match_intent(text)
 
-    # ---------------- Entities ---------------- #
+    # ------------------------------------------------ #
+    # Entities
+    # ------------------------------------------------ #
 
     def entities(self, text):
 
@@ -117,7 +163,11 @@ class NLU:
 
             if text.startswith("close"):
 
-                data["app"] = text.replace("close", "", 1).strip()
+                data["app"] = text.replace(
+                    "close",
+                    "",
+                    1
+                ).strip()
 
                 return data
 
@@ -125,7 +175,11 @@ class NLU:
 
         if intent == "minimize":
 
-            data["app"] = text.replace("minimize", "", 1).strip()
+            data["app"] = text.replace(
+                "minimize",
+                "",
+                1
+            ).strip()
 
             return data
 
@@ -133,7 +187,11 @@ class NLU:
 
         if intent == "maximize":
 
-            data["app"] = text.replace("maximize", "", 1).strip()
+            data["app"] = text.replace(
+                "maximize",
+                "",
+                1
+            ).strip()
 
             return data
 
@@ -141,7 +199,11 @@ class NLU:
 
         if intent == "restore":
 
-            data["app"] = text.replace("restore", "", 1).strip()
+            data["app"] = text.replace(
+                "restore",
+                "",
+                1
+            ).strip()
 
             return data
 
@@ -200,7 +262,9 @@ class NLU:
 
         return data
 
-    # ---------------- Helper ---------------- #
+    # ------------------------------------------------ #
+    # Helpers
+    # ------------------------------------------------ #
 
     def is_greeting(self, text):
         return self.intent(text) == "greeting"

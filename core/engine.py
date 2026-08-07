@@ -3,18 +3,52 @@ ARIS V18.0 Stable Core Engine
 Author : Raj Babu Mishra
 """
 
-from brain.nlu import nlu
-from brain.context import context
-from brain.router import router
-from brain.reasoning import reasoning
-from brain.decision import decision
-from brain.planner import planner
-from brain.command_recovery import command_recovery
-from brain.speech_recovery import speech_recovery
+import time
 
+t = time.perf_counter()
+
+from brain.nlu import nlu
+print(f"brain.nlu          : {time.perf_counter()-t:.2f}s")
+
+t = time.perf_counter()
+from brain.context import context
+print(f"brain.context      : {time.perf_counter()-t:.2f}s")
+
+t = time.perf_counter()
+from brain.router import router
+print(f"brain.router       : {time.perf_counter()-t:.2f}s")
+
+t = time.perf_counter()
+from brain.reasoning import reasoning
+print(f"brain.reasoning    : {time.perf_counter()-t:.2f}s")
+
+t = time.perf_counter()
+from brain.decision import decision
+print(f"brain.decision     : {time.perf_counter()-t:.2f}s")
+
+t = time.perf_counter()
+from brain.planner import planner
+print(f"brain.planner      : {time.perf_counter()-t:.2f}s")
+
+t = time.perf_counter()
+from brain.command_recovery import command_recovery
+print(f"command_recovery   : {time.perf_counter()-t:.2f}s")
+
+t = time.perf_counter()
+from brain.speech_recovery import speech_recovery
+print(f"speech_recovery    : {time.perf_counter()-t:.2f}s")
+
+t = time.perf_counter()
 from core.memory import memory
+print(f"core.memory        : {time.perf_counter()-t:.2f}s")
+
+t = time.perf_counter()
 from core.commands import execute
+print(f"core.commands      : {time.perf_counter()-t:.2f}s")
+
+t = time.perf_counter()
 from core.identity import aris
+print(f"core.identity      : {time.perf_counter()-t:.2f}s")
 
 
 class Engine:

@@ -12,22 +12,74 @@ from brain.aliases.browser import ALIASES as BROWSER
 from brain.aliases.system import ALIASES as SYSTEM
 
 
+# ---------------------------------------------------------
+# Protected Token
+# ---------------------------------------------------------
+
+def _protected(word):
+
+    return (
+        "." in word
+        or "\\" in word
+        or "/" in word
+        or ":" in word
+    )
+
+
+# ---------------------------------------------------------
+# Exact Alias Replacement
+# ---------------------------------------------------------
+
 def _replace(text, aliases):
 
-    for wrong, correct in aliases.items():
+    words = text.split()
+    result = []
 
-        text = text.replace(wrong, correct)
+    for word in words:
 
-    return text
+        # Never modify filenames / paths
+        if _protected(word):
+            result.append(word)
+            continue
 
+        # IMPORTANT:
+        # Exact-word replacement only.
+        #
+        # document  -> documents
+        # documents -> documents
+        #
+        # Never:
+        # documents -> documentss
+        #
+
+        result.append(
+            aliases.get(word, word)
+        )
+
+    return " ".join(result)
+
+
+# ---------------------------------------------------------
+# Fuzzy Recovery
+# ---------------------------------------------------------
 
 def _recover_words(text, aliases):
 
     words = []
-
     keys = list(aliases.keys())
+    values = set(aliases.values())
 
     for word in text.split():
+
+        # Protect filenames and paths
+        if _protected(word):
+            words.append(word)
+            continue
+
+        # Already valid alias/value
+        if word in keys or word in values:
+            words.append(word)
+            continue
 
         match = get_close_matches(
             word,
@@ -38,7 +90,9 @@ def _recover_words(text, aliases):
 
         if match:
 
-            words.append(aliases[match[0]])
+            words.append(
+                aliases[match[0]]
+            )
 
         else:
 
@@ -47,24 +101,44 @@ def _recover_words(text, aliases):
     return " ".join(words)
 
 
+# ---------------------------------------------------------
+# Main Recovery
+# ---------------------------------------------------------
+
 def recover(text):
 
     text = text.lower().strip()
 
-    # ---------- Common ----------
+    if not text:
+        return text
 
-    text = _replace(text, COMMON)
-    text = _recover_words(text, COMMON)
+    # -----------------------------------------------------
+    # Common
+    # -----------------------------------------------------
 
-    # ---------- Files ----------
+    text = _replace(
+        text,
+        COMMON
+    )
+
+    text = _recover_words(
+        text,
+        COMMON
+    )
+
+    # -----------------------------------------------------
+    # File / Folder
+    # -----------------------------------------------------
 
     if (
-        text.startswith("create")
-        or text.startswith("make")
-        or text.startswith("delete")
-        or text.startswith("rename")
-        or text.startswith("copy")
-        or text.startswith("move")
+        text.startswith("create ")
+        or text.startswith("make ")
+        or text.startswith("delete ")
+        or text.startswith("rename ")
+        or text.startswith("copy ")
+        or text.startswith("move ")
+        or text.startswith("open file ")
+        or text.startswith("open folder ")
         or text.startswith("open desktop")
         or text.startswith("open documents")
         or text.startswith("open downloads")
@@ -73,34 +147,68 @@ def recover(text):
         or text.startswith("open videos")
     ):
 
-        text = _replace(text, FILES)
-        text = _recover_words(text, FILES)
+        text = _replace(
+            text,
+            FILES
+        )
 
-    # ---------- Apps ----------
+        text = _recover_words(
+            text,
+            FILES
+        )
+
+    # -----------------------------------------------------
+    # Apps
+    # -----------------------------------------------------
 
     if (
-        text.startswith("open")
-        or text.startswith("launch")
-        or text.startswith("start")
-        or text.startswith("run")
-        or text.startswith("minimize")
-        or text.startswith("maximize")
-        or text.startswith("restore")
-        or text.startswith("switch")
+        text.startswith("open ")
+        or text.startswith("launch ")
+        or text.startswith("start ")
+        or text.startswith("run ")
+        or text.startswith("minimize ")
+        or text.startswith("maximize ")
+        or text.startswith("restore ")
+        or text.startswith("switch ")
     ):
 
-        text = _replace(text, APPS)
-        text = _recover_words(text, APPS)
+        text = _replace(
+            text,
+            APPS
+        )
 
-    # ---------- Browser ----------
+        text = _recover_words(
+            text,
+            APPS
+        )
 
-    text = _replace(text, BROWSER)
-    text = _recover_words(text, BROWSER)
+    # -----------------------------------------------------
+    # Browser
+    # -----------------------------------------------------
 
-    # ---------- System ----------
+    text = _replace(
+        text,
+        BROWSER
+    )
 
-    text = _replace(text, SYSTEM)
-    text = _recover_words(text, SYSTEM)
+    text = _recover_words(
+        text,
+        BROWSER
+    )
+
+    # -----------------------------------------------------
+    # System
+    # -----------------------------------------------------
+
+    text = _replace(
+        text,
+        SYSTEM
+    )
+
+    text = _recover_words(
+        text,
+        SYSTEM
+    )
 
     return text
 

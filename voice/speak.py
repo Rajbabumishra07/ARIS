@@ -1,5 +1,5 @@
 """
-ARIS V16.5 Smart Voice Engine
+ARIS V18 Smart Voice Engine
 Author : Raj Babu Mishra
 """
 
@@ -15,23 +15,52 @@ import voice.state as state
 
 VOICE = "en-US-AndrewNeural"
 
-pygame.mixer.init()
+# ---------------- Lazy Init ---------------- #
 
+_mixer_ready = False
+_offline = None
+
+
+def _init_audio():
+
+    global _mixer_ready, _offline
+
+    if not _mixer_ready:
+
+        pygame.mixer.init()
+
+        _mixer_ready = True
+
+    if _offline is None:
+
+        _offline = pyttsx3.init()
+
+        _offline.setProperty("rate", 180)
+
+
+# ---------------- Offline ---------------- #
 
 def offline_speak(text):
-    engine = pyttsx3.init()
-    engine.setProperty("rate", 180)
-    engine.say(str(text))
-    engine.runAndWait()
 
+    _init_audio()
+
+    _offline.say(str(text))
+
+    _offline.runAndWait()
+
+
+# ---------------- Main Speak ---------------- #
 
 def speak(text):
 
     state.SPEAKING = True
 
+    _init_audio()
+
     text = str(text)
 
     # Date Converter
+
     if "-" in text and len(text) == 10:
 
         try:
@@ -39,6 +68,7 @@ def speak(text):
             day, month, year = text.split("-")
 
             months = {
+
                 "01": "January",
                 "02": "February",
                 "03": "March",
@@ -51,34 +81,47 @@ def speak(text):
                 "10": "October",
                 "11": "November",
                 "12": "December"
+
             }
 
             if month in months:
+
                 text = f"{int(day)} {months[month]} {year}"
 
         except Exception:
+
             pass
 
     fd, filename = tempfile.mkstemp(suffix=".mp3")
+
     os.close(fd)
 
     try:
 
         async def _tts():
+
             communicate = edge_tts.Communicate(
+
                 text=text,
+
                 voice=VOICE,
+
                 rate="+15%",
+
                 volume="+40%"
+
             )
+
             await communicate.save(filename)
 
         asyncio.run(_tts())
 
         pygame.mixer.music.load(filename)
+
         pygame.mixer.music.play()
 
         while pygame.mixer.music.get_busy():
+
             pygame.time.Clock().tick(10)
 
         pygame.mixer.music.unload()
@@ -86,8 +129,11 @@ def speak(text):
     except Exception as e:
 
         print()
+
         print("⚠ Edge TTS Failed")
+
         print(e)
+
         print("🔊 Switching to Offline Voice")
 
         offline_speak(text)
@@ -95,8 +141,11 @@ def speak(text):
     finally:
 
         try:
+
             os.remove(filename)
+
         except Exception:
+
             pass
 
         state.SPEAKING = False

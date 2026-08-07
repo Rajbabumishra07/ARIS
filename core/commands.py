@@ -1,34 +1,37 @@
 """
-ARIS V16 Core Command Executor
+ARIS V18 Core Command Executor
 Author : Raj Babu Mishra
+
+P0.2.2
+Single Command Router
+Lazy System Imports
 """
 
-from system.apps import open_app
-from system.browser import browser_command
-from system.files import open_folder
-from system.file_manager import file_manager
-from system.folder_operations import folder_operations
-from system.screenshot import take_screenshot
-from core.file_commands import execute_file
-
-from system.app_manager import open_application
-from system.website_manager import open_website
-from system.system_manager import execute_system
-from system.media_manager import play_media
-from system.app_launcher import launch
-from system.window_manager import window
-
 from brain.action_memory import action_memory
+
+from core.file_commands import execute_file
 from core.folder_commands import execute_folder
 
+
+# =========================================================
+# COMMAND EXECUTOR
+# =========================================================
 
 def execute(command):
 
     print("🔧 Executing command:", command)
 
+    if not command:
+        return None
+
     command = command.lower().strip()
 
-    # ---------------- Action Memory ---------------- #
+    if not command:
+        return None
+
+    # =====================================================
+    # ACTION MEMORY
+    # =====================================================
 
     if (
         command.startswith("open ")
@@ -39,97 +42,125 @@ def execute(command):
 
         target = command.split(" ", 1)[1].strip()
 
-        action_memory.remember("open", target)
+        if target:
+            action_memory.remember(
+                "open",
+                target
+            )
 
     elif command.startswith("play "):
 
         target = command.split(" ", 1)[1].strip()
 
-        action_memory.remember("play", target)
+        if target:
+            action_memory.remember(
+                "play",
+                target
+            )
 
-        # ---------------- Window Manager ---------------- #
+    # =====================================================
+    # WINDOW MANAGER
+    # =====================================================
 
     if command.startswith("minimize "):
 
-        app = command.replace("minimize ", "").strip()
+        from system.window_manager import window
+
+        app = command.replace(
+            "minimize ",
+            "",
+            1
+        ).strip()
+
+        if not app:
+            return "Please tell me which window to minimize."
 
         if window.minimize(app):
-
             return f"Minimized {app.title()}."
 
         return f"I couldn't find {app.title()}."
 
+    # -----------------------------------------------------
 
     if command.startswith("maximize "):
 
-        app = command.replace("maximize ", "").strip()
+        from system.window_manager import window
+
+        app = command.replace(
+            "maximize ",
+            "",
+            1
+        ).strip()
+
+        if not app:
+            return "Please tell me which window to maximize."
 
         if window.maximize(app):
-
             return f"Maximized {app.title()}."
 
         return f"I couldn't find {app.title()}."
 
+    # -----------------------------------------------------
 
     if command.startswith("restore "):
 
-        app = command.replace("restore ", "").strip()
+        from system.window_manager import window
+
+        app = command.replace(
+            "restore ",
+            "",
+            1
+        ).strip()
+
+        if not app:
+            return "Please tell me which window to restore."
 
         if window.restore(app):
-
             return f"Restored {app.title()}."
 
         return f"I couldn't find {app.title()}."
 
+    # -----------------------------------------------------
 
     if command.startswith("switch to "):
 
-        app = command.replace("switch to ", "").strip()
+        from system.window_manager import window
+
+        app = command.replace(
+            "switch to ",
+            "",
+            1
+        ).strip()
+
+        if not app:
+            return "Please tell me which window to switch to."
 
         if window.activate(app):
-
             return f"Switched to {app.title()}."
 
         return f"I couldn't find {app.title()}."
 
-     # ---------------- Folder Operations ---------------- #
-
-    if command.startswith("create folder "):
-
-       name = command.replace("create folder ", "").strip()
-
-       if not name:
-
-           return "Please tell me the folder name."
-
-       return folder_operations.create(name)
-
-
-    if command.startswith("make folder "):
-
-        name = command.replace("make folder ", "").strip()
-
-        if not name:
-
-            return "Please tell me the folder name."
-
-        return folder_operations.create(name)
-
-    # ---------------- File Commands ---------------- #
+    # =====================================================
+    # FILE ROUTER
+    # =====================================================
 
     result = execute_file(command)
 
     if result is not None:
         return result
 
-        # ---------------- Folder Commands ---------------- #
+    # =====================================================
+    # FOLDER ROUTER
+    # =====================================================
 
     result = execute_folder(command)
 
     if result is not None:
         return result
 
-    # ---------------- Smart Launcher ---------------- #
+    # =====================================================
+    # SMART APP LAUNCHER
+    # =====================================================
 
     if (
         command.startswith("open ")
@@ -138,83 +169,137 @@ def execute(command):
         or command.startswith("run ")
     ):
 
-        app = command.split(" ", 1)[1].strip()
+        from system.app_launcher import launch
 
-        print("🚀 Launching:", app)
+        app = command.split(
+            " ",
+            1
+        )[1].strip()
 
-        result = launch(app)
+        if app:
 
-        if result is not None:
-            return result
+            print("🚀 Launching:", app)
 
-    # ---------------- App Manager ---------------- #
+            result = launch(app)
+
+            if result is not None:
+                return result
+
+    # =====================================================
+    # APP MANAGER
+    # =====================================================
+
+    from system.app_manager import open_application
 
     result = open_application(command)
 
     if result is not None:
         return result
 
-    # ---------------- Website ---------------- #
+    # =====================================================
+    # WEBSITE MANAGER
+    # =====================================================
+
+    from system.website_manager import open_website
 
     result = open_website(command)
 
     if result is not None:
         return result
-        # ---------------- Media ---------------- #
+
+    # =====================================================
+    # MEDIA MANAGER
+    # =====================================================
+
+    from system.media_manager import play_media
 
     result = play_media(command)
 
     if result is not None:
         return result
 
-    # ---------------- System ---------------- #
+    # =====================================================
+    # SYSTEM MANAGER
+    # =====================================================
+
+    from system.system_manager import execute_system
 
     result = execute_system(command)
 
     if result is not None:
         return result
 
-    # ---------------- Legacy Apps ---------------- #
+    # =====================================================
+    # LEGACY APP ROUTER
+    # =====================================================
+
+    from system.apps import open_app
 
     result = open_app(command)
 
     if result is not None:
         return result
 
-    # ---------------- File Manager ---------------- #
+    # =====================================================
+    # FILE MANAGER
+    # =====================================================
 
     if (
-       command.startswith("open ")
-       or command.startswith("launch ")
-       or command.startswith("start ")
-       or command.startswith("run ")
+        command.startswith("open ")
+        or command.startswith("launch ")
+        or command.startswith("start ")
+        or command.startswith("run ")
     ):
 
-      folder = command.split(" ", 1)[1].strip()
+        from system.file_manager import file_manager
 
-      response = file_manager.open(folder)
+        folder = command.split(
+            " ",
+            1
+        )[1].strip()
 
-    # ---------------- Browser ---------------- #
+        if folder:
+
+            response = file_manager.open(folder)
+
+            if response is not None:
+                return response
+
+    # =====================================================
+    # BROWSER
+    # =====================================================
+
+    from system.browser import browser_command
 
     result = browser_command(command)
 
     if result is not None:
         return result
 
-    # ---------------- Files ---------------- #
+    # =====================================================
+    # LEGACY FILE/FOLDER OPEN
+    # =====================================================
+
+    from system.files import open_folder
 
     result = open_folder(command)
 
     if result is not None:
         return result
 
-    # ---------------- Screenshot ---------------- #
+    # =====================================================
+    # SCREENSHOT
+    # =====================================================
+
+    from system.screenshot import take_screenshot
 
     result = take_screenshot(command)
 
     if result is not None:
         return result
 
-    # ---------------- Nothing Matched ---------------- #
+    # =====================================================
+    # NOTHING MATCHED
+    # =====================================================
 
     return None

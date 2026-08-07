@@ -1,6 +1,45 @@
+import time
+
+t = time.perf_counter()
 from voice.voice_engine import get_command
+print(f"voice_engine      : {time.perf_counter()-t:.2f}s")
+
+t = time.perf_counter()
 from voice.wake_word import is_wake_word
+print(f"wake_word         : {time.perf_counter()-t:.2f}s")
+
+t = time.perf_counter()
 from voice.voice_commands import special_voice_command
+print(f"voice_commands    : {time.perf_counter()-t:.2f}s")
+
+t = time.perf_counter()
+from core.brain import process_command
+print(f"core.brain        : {time.perf_counter()-t:.2f}s")
+
+t = time.perf_counter()
+from voice.speak import speak
+print(f"speak             : {time.perf_counter()-t:.2f}s")
+
+t = time.perf_counter()
+from brain.nlu import nlu
+print(f"nlu               : {time.perf_counter()-t:.2f}s")
+
+t = time.perf_counter()
+from brain.followup import followup
+print(f"followup          : {time.perf_counter()-t:.2f}s")
+
+t = time.perf_counter()
+from brain.multi_command import multi
+print(f"multi             : {time.perf_counter()-t:.2f}s")
+
+t = time.perf_counter()
+from brain.context import context
+print(f"context           : {time.perf_counter()-t:.2f}s")
+
+t = time.perf_counter()
+from brain.speech_cleaner import speech_cleaner
+print(f"speech_cleaner    : {time.perf_counter()-t:.2f}s")
+
 
 sleep_mode = False
 
@@ -8,16 +47,6 @@ sleep_mode = False
 def start_listening():
 
     global sleep_mode
-
-    # -------- Lazy Imports -------- #
-    from core.brain import process_command
-    from voice.speak import speak
-
-    from brain.nlu import nlu
-    from brain.followup import followup
-    from brain.multi_command import multi
-    from brain.context import context
-    from brain.speech_cleaner import speech_cleaner
 
     print("🎤 ARIS Voice System Started")
 
@@ -31,9 +60,8 @@ def start_listening():
         # -------- Speech Cleaning -------- #
 
         command = speech_cleaner.clean(command)
-        command = nlu.normalize(command)
 
-        # Ignore garbage words
+        command = nlu.normalize(command)
 
         if command in {
             "",
@@ -64,7 +92,9 @@ def start_listening():
         }:
 
             speak("Good night, Sir.")
+
             print("ARIS Offline")
+
             break
 
         # -------- Special Voice Commands -------- #
@@ -74,7 +104,9 @@ def start_listening():
         if action == "sleep":
 
             sleep_mode = True
+
             speak("Sleep mode activated, Sir.")
+
             continue
 
         # -------- Sleep Mode -------- #
@@ -84,6 +116,7 @@ def start_listening():
             if is_wake_word(command):
 
                 sleep_mode = False
+
                 speak("Yes Sir.")
 
             continue
@@ -93,6 +126,7 @@ def start_listening():
         if is_wake_word(command):
 
             speak("Hello Sir.")
+
             continue
 
         # -------- Follow Up -------- #
@@ -102,6 +136,7 @@ def start_listening():
         if resolved:
 
             command = resolved
+
             print("🤖 ARIS (FollowUp):", command)
 
         # -------- Multi Commands -------- #
@@ -122,10 +157,13 @@ def start_listening():
             if result == "exit":
 
                 speak("Goodbye Sir.")
+
                 print("ARIS Offline")
+
                 return
 
             if result:
 
                 print("🤖 ARIS:", result)
+
                 speak(result)

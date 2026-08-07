@@ -1,5 +1,5 @@
 """
-ARIS V17.7 Smart File Operations
+ARIS V18 Smart File Operations
 Author : Raj Babu Mishra
 """
 
@@ -14,25 +14,21 @@ from system.path_utils import get_base
 class FileOperations:
 
     def __init__(self):
-
-        self.reload()
+        pass
 
     # ---------------- Reload ---------------- #
 
     def reload(self):
-
         file_index.reload()
 
     # ---------------- Exists ---------------- #
 
     def exists(self, name):
-
         return file_index.exists(name)
 
     # ---------------- Search ---------------- #
 
     def search(self, name):
-
         return file_index.find(name)
 
     # ---------------- Open ---------------- #
@@ -45,23 +41,18 @@ class FileOperations:
             return f"File {name} not found."
 
         try:
-
             os.startfile(path)
-
             return f"Opening {name}."
 
         except Exception as e:
-
             print("File Open Error:", e)
-
             return "Unable to open file."
 
-# ---------------- Create ---------------- #
+    # ---------------- Create ---------------- #
 
     def create(self, name, location="desktop"):
 
         location = normalize_location(location)
-
         base = get_base(location)
 
         if base is None:
@@ -74,17 +65,15 @@ class FileOperations:
             if os.path.exists(path):
                 return f"File {name} already exists."
 
-            with open(path, "w", encoding="utf-8") as f:
+            with open(path, "w", encoding="utf-8"):
                 pass
 
-            file_index.reload()
+            file_index.add(path)
 
             return f"File {name} created successfully."
 
         except Exception as e:
-
             print("File Create Error:", e)
-
             return "Unable to create file."
 
     # ---------------- Rename ---------------- #
@@ -108,14 +97,12 @@ class FileOperations:
 
             os.rename(source, destination)
 
-            file_index.reload()
+            file_index.rename(old_name, destination)
 
             return f"File {old_name} renamed to {new_name}."
 
         except Exception as e:
-
             print("File Rename Error:", e)
-
             return "Unable to rename file."
 
     # ---------------- Delete ---------------- #
@@ -131,17 +118,15 @@ class FileOperations:
 
             os.remove(path)
 
-            file_index.reload()
+            file_index.remove(name)
 
             return f"File {name} deleted successfully."
 
         except Exception as e:
-
             print("File Delete Error:", e)
-
             return "Unable to delete file."
 
-# ---------------- Move ---------------- #
+    # ---------------- Move ---------------- #
 
     def move(self, name, destination):
 
@@ -166,14 +151,12 @@ class FileOperations:
 
             shutil.move(source, target)
 
-            file_index.reload()
+            file_index.rename(name, target)
 
             return f"File {name} moved to {destination.title()}."
 
         except Exception as e:
-
             print("File Move Error:", e)
-
             return "Unable to move file."
 
     # ---------------- Copy ---------------- #
@@ -201,14 +184,12 @@ class FileOperations:
 
             shutil.copy2(source, target)
 
-            file_index.reload()
+            file_index.add(target)
 
             return f"File {name} copied to {destination.title()}."
 
         except Exception as e:
-
             print("File Copy Error:", e)
-
             return "Unable to copy file."
 
 

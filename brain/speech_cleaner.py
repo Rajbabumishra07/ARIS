@@ -1,5 +1,5 @@
 """
-ARIS V17.9 Smart Speech Cleaner
+ARIS V18 Smart Speech Cleaner
 Author : Raj Babu Mishra
 """
 
@@ -17,8 +17,8 @@ class SpeechCleaner:
 
             "launch a": "launch",
             "open a": "open",
-            "start a": "open",
-            "run a": "open",
+            "start a": "start",
+            "run a": "run",
 
             "launch": "open",
             "start": "open",
@@ -29,24 +29,21 @@ class SpeechCleaner:
             "o pen": "open",
             "opan": "open",
 
-            # -------- Conversation Fillers -------- #
+            # -------- Common Command Mistakes -------- #
 
-            "can you ": "",
-            "could you ": "",
-            "would you ": "",
-            "please ": "",
-            "kindly ": "",
-            "to ": "",
+            "creat file": "create file",
+            "creat folder": "create folder",
 
-            "create a ": "create ",
-            "open a ": "open ",
-            "delete a ": "delete ",
-            "rename a ": "rename ",
-            "copy a ": "copy ",
-            "move a ": "move ",
+            "crete file": "create file",
+            "crete folder": "create folder",
 
-            "folder named ": "folder ",
-            "file named ": "file ",
+            "creat": "create",
+
+            "renam file": "rename file",
+            "renam folder": "rename folder",
+
+            "delate file": "delete file",
+            "delate folder": "delete folder",
 
             # -------- Common Apps -------- #
 
@@ -74,10 +71,7 @@ class SpeechCleaner:
             "sir": "",
             "okay": "",
             "ok": "",
-            "the": "",
-            " a ": " ",
-            " an ": " ",
-            " to ": " "
+
         }
 
         self.apps = [
@@ -96,6 +90,24 @@ class SpeechCleaner:
 
         ]
 
+    # -------------------------------------------------
+    # Filename / path detection
+    # -------------------------------------------------
+
+    def _is_protected_token(self, word):
+
+        return (
+            "." in word
+            or "\\" in word
+            or "/" in word
+            or ":" in word
+            or word.startswith(".")
+        )
+
+    # -------------------------------------------------
+    # App fuzzy matching
+    # -------------------------------------------------
+
     def fuzzy_match_apps(self, text):
 
         words = text.split()
@@ -104,11 +116,16 @@ class SpeechCleaner:
 
         for word in words:
 
+            # NEVER fuzzy-match filenames or paths.
+            if self._is_protected_token(word):
+                new_words.append(word)
+                continue
+
             match = difflib.get_close_matches(
                 word,
                 self.apps,
                 n=1,
-                cutoff=0.65
+                cutoff=0.75
             )
 
             if match:
@@ -118,15 +135,25 @@ class SpeechCleaner:
 
         return " ".join(new_words)
 
+    # -------------------------------------------------
+    # Cleaning
+    # -------------------------------------------------
+
     def clean(self, text):
+
+        if not text:
+            return ""
 
         text = text.lower().strip()
 
+        # Fix common speech errors first.
         for old, new in self.replacements.items():
             text = text.replace(old, new)
 
+        # Normalize whitespace only.
         text = re.sub(r"\s+", " ", text)
 
+        # Protect filename-like tokens from app fuzzy matching.
         text = self.fuzzy_match_apps(text)
 
         return text.strip()

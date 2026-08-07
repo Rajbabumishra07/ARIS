@@ -1,48 +1,35 @@
 """
-ARIS V17.6 Smart Folder Operations
+ARIS V18 Smart Folder Operations
 Author : Raj Babu Mishra
 """
 
 import os
 import shutil
 
-from system.folder_database import load_folders
-from system.folder_alias import normalize_folder
 from system.folder_index import folder_index
-from system.path_utils import get_path, get_base
+from system.folder_alias import normalize_folder
+from system.path_utils import get_base
 
 
 class FolderOperations:
 
     def __init__(self):
-
-        self.reload()
+        pass
 
     # ---------------- Reload ---------------- #
 
     def reload(self):
-
-        self.folders = load_folders()
-
         folder_index.reload()
 
     # ---------------- Exists ---------------- #
 
     def exists(self, name):
-
         return folder_index.exists(name)
 
     # ---------------- Search ---------------- #
 
     def search(self, name):
-
-        path = folder_index.find(name)
-
-        if path is None:
-
-            return None
-
-        return path
+        return folder_index.find(name)
 
     # ---------------- Open ---------------- #
 
@@ -51,27 +38,21 @@ class FolderOperations:
         path = folder_index.find(name)
 
         if path is None:
-
             return f"Folder {name} not found."
 
         try:
-
             os.startfile(path)
-
             return f"Opening folder {name}."
 
         except Exception as e:
-
             print("Folder Open Error:", e)
-
             return "Unable to open folder."
 
-            # ---------------- Create ---------------- #
+    # ---------------- Create ---------------- #
 
     def create(self, name, location="desktop"):
 
         location = normalize_folder(location)
-
         base = get_base(location)
 
         if base is None:
@@ -86,14 +67,12 @@ class FolderOperations:
 
             os.makedirs(path)
 
-            folder_index.reload()
+            folder_index.add(path)
 
             return f"Folder {name} created successfully."
 
         except Exception as e:
-
             print("Folder Create Error:", e)
-
             return "Unable to create folder."
 
     # ---------------- Rename ---------------- #
@@ -117,14 +96,12 @@ class FolderOperations:
 
             os.rename(source, destination)
 
-            folder_index.reload()
+            folder_index.rename(old_name, destination)
 
             return f"Folder {old_name} renamed to {new_name}."
 
         except Exception as e:
-
             print("Folder Rename Error:", e)
-
             return "Unable to rename folder."
 
     # ---------------- Delete ---------------- #
@@ -143,17 +120,15 @@ class FolderOperations:
 
             os.rmdir(path)
 
-            folder_index.reload()
+            folder_index.remove(name)
 
             return f"Folder {name} deleted successfully."
 
         except Exception as e:
-
             print("Folder Delete Error:", e)
-
             return "Unable to delete folder."
 
-            # ---------------- Move ---------------- #
+    # ---------------- Move ---------------- #
 
     def move(self, name, destination):
 
@@ -163,7 +138,6 @@ class FolderOperations:
             return f"Folder {name} not found."
 
         destination = normalize_folder(destination)
-
         dest = get_base(destination)
 
         if dest is None:
@@ -178,14 +152,12 @@ class FolderOperations:
 
             shutil.move(source, target)
 
-            folder_index.reload()
+            folder_index.rename(name, target)
 
             return f"Folder {name} moved to {destination.title()}."
 
         except Exception as e:
-
             print("Folder Move Error:", e)
-
             return "Unable to move folder."
 
     # ---------------- Copy ---------------- #
@@ -198,7 +170,6 @@ class FolderOperations:
             return f"Folder {name} not found."
 
         destination = normalize_folder(destination)
-
         dest = get_base(destination)
 
         if dest is None:
@@ -213,14 +184,12 @@ class FolderOperations:
 
             shutil.copytree(source, target)
 
-            folder_index.reload()
+            folder_index.add(target)
 
             return f"Folder {name} copied to {destination.title()}."
 
         except Exception as e:
-
             print("Folder Copy Error:", e)
-
             return "Unable to copy folder."
 
 
