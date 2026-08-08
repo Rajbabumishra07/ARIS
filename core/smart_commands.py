@@ -4,7 +4,6 @@ from ai.nlp import normalize_command
 from ai.personal_ai import personal_ai
 from brain.suggestions import suggestion
 
-from brain.router import route
 from brain.conversation import conversation
 from skills.repeat import repeat_last
 
@@ -19,28 +18,36 @@ def smart_command(command):
     command = normalize_command(command)
     command = command.lower().strip()
 
-    # ---------------- Conversation ---------------- #
+    # =====================================================
+    # CONVERSATION
+    # =====================================================
 
     result = conversation(command)
 
     if result:
         return result
 
-    # ---------------- Suggestions ---------------- #
+    # =====================================================
+    # SUGGESTIONS
+    # =====================================================
 
     result = suggestion(command)
 
     if result:
         return result
 
-    # ---------------- Personal AI ---------------- #
+    # =====================================================
+    # PERSONAL AI
+    # =====================================================
 
     result = personal_ai(command)
 
     if result:
         return result
 
-    # ---------------- Repeat ---------------- #
+    # =====================================================
+    # REPEAT / CONTEXT
+    # =====================================================
 
     if command in [
         "again",
@@ -53,18 +60,17 @@ def smart_command(command):
         if cmd:
             command = cmd
 
-    # ---------------- Router ---------------- #
-
-    result = route(command)
-
-    if result:
-        return result
-
-    # ---------------- Play Music ---------------- #
+    # =====================================================
+    # PLAY MUSIC
+    # =====================================================
 
     if command.startswith("play "):
 
-        song = command.replace("play", "", 1).strip()
+        song = command.replace(
+            "play",
+            "",
+            1
+        ).strip()
 
         webbrowser.open(
             f"https://www.youtube.com/results?search_query={quote(song)}"
@@ -72,7 +78,9 @@ def smart_command(command):
 
         return f"Playing {song} on YouTube."
 
-    # ---------------- Hanuman Chalisa ---------------- #
+    # =====================================================
+    # HANUMAN CHALISA
+    # =====================================================
 
     elif command in [
         "hanuman chalisa",
@@ -85,53 +93,75 @@ def smart_command(command):
 
         return "Playing Hanuman Chalisa."
 
-    # ---------------- Websites ---------------- #
+    # =====================================================
+    # WEBSITES
+    # =====================================================
 
     elif command == "youtube":
 
-        webbrowser.open("https://www.youtube.com")
+        webbrowser.open(
+            "https://www.youtube.com"
+        )
 
         return "Opening YouTube."
 
     elif command == "google":
 
-        webbrowser.open("https://www.google.com")
+        webbrowser.open(
+            "https://www.google.com"
+        )
 
         return "Opening Google."
 
     elif command == "gmail":
 
-        webbrowser.open("https://mail.google.com")
+        webbrowser.open(
+            "https://mail.google.com"
+        )
 
         return "Opening Gmail."
 
     elif command == "github":
 
-        webbrowser.open("https://github.com")
+        webbrowser.open(
+            "https://github.com"
+        )
 
         return "Opening GitHub."
 
     elif command == "chatgpt":
 
-        webbrowser.open("https://chatgpt.com")
+        webbrowser.open(
+            "https://chatgpt.com"
+        )
 
         return "Opening ChatGPT."
 
-    # ---------------- System Commands ---------------- #
+    # =====================================================
+    # CORE COMMAND EXECUTOR
+    #
+    # Single execution path.
+    # File/folder/app/system commands are handled
+    # by core.commands.
+    # =====================================================
 
     result = execute(command)
 
     if result:
         return result
 
-    # ---------------- Internet Search ---------------- #
+    # =====================================================
+    # INTERNET SEARCH
+    # =====================================================
 
     result = internet_search(command)
 
     if result:
         return result
 
-    # ---------------- Greetings ---------------- #
+    # =====================================================
+    # GREETINGS
+    # =====================================================
 
     if command in [
         "hello",
@@ -141,42 +171,66 @@ def smart_command(command):
         "good afternoon",
         "good evening"
     ]:
+
         return "Hello! How can I help you?"
 
-    # ---------------- AI ---------------- #
+    # =====================================================
+    # BASIC AI
+    # =====================================================
 
     elif command == "who are you":
+
         return "I am ARIS, your personal AI assistant."
 
     elif command == "who made you":
+
         return "I was created by Raj Babu Mishra."
 
     elif command == "how are you":
+
         return "I am doing great. Ready to help you."
 
     elif command == "what can you do":
+
         return (
-            "I can open apps, search Google, search YouTube,"
+            "I can open apps, search Google, search YouTube, "
             "search Wikipedia, remember information, "
             "tell time and date and help you with many tasks."
         )
 
-    # ---------------- Calculator ---------------- #
+    # =====================================================
+    # CALCULATOR
+    # =====================================================
 
     elif command.startswith("calculate "):
 
-        expression = command.replace("calculate", "", 1).strip()
+        expression = command.replace(
+            "calculate",
+            "",
+            1
+        ).strip()
 
         try:
-            return str(eval(expression))
+
+            return str(
+                eval(expression)
+            )
+
         except Exception:
+
             return "Invalid calculation."
 
-    # ---------------- Wikipedia ---------------- #
+    # =====================================================
+    # WIKIPEDIA
+    # =====================================================
 
     elif command.startswith("wiki "):
 
-        topic = command.replace("wiki", "", 1).strip()
+        topic = command.replace(
+            "wiki",
+            "",
+            1
+        ).strip()
 
         try:
 
@@ -189,51 +243,73 @@ def smart_command(command):
             )
 
         except wikipedia.exceptions.DisambiguationError as e:
-            return "Multiple topics found: " + ", ".join(e.options[:5])
+
+            return (
+                "Multiple topics found: "
+                + ", ".join(e.options[:5])
+            )
 
         except wikipedia.exceptions.PageError:
+
             return "No Wikipedia page found."
 
         except Exception:
+
             return "No information found."
 
-    # ---------------- Time ---------------- #
+    # =====================================================
+    # TIME
+    # =====================================================
 
     elif command in [
         "time",
         "what is the time"
     ]:
 
-        return datetime.now().strftime("%I:%M %p")
+        return datetime.now().strftime(
+            "%I:%M %p"
+        )
 
-    # ---------------- Date ---------------- #
+    # =====================================================
+    # DATE
+    # =====================================================
 
     elif command in [
         "date",
         "today date"
     ]:
 
-        return datetime.now().strftime("%d-%m-%Y")
+        return datetime.now().strftime(
+            "%d-%m-%Y"
+        )
 
-    # ---------------- Weather ---------------- #
+    # =====================================================
+    # WEATHER
+    # =====================================================
 
     elif command.startswith("weather"):
 
         return "Weather module will be added soon."
 
-    # ---------------- News ---------------- #
+    # =====================================================
+    # NEWS
+    # =====================================================
 
     elif command == "news":
 
         return "News module will be added soon."
 
-    # ---------------- Translation ---------------- #
+    # =====================================================
+    # TRANSLATION
+    # =====================================================
 
     elif command.startswith("translate"):
 
         return "Translation module will be added soon."
 
-    # ---------------- Thanks ---------------- #
+    # =====================================================
+    # THANKS
+    # =====================================================
 
     elif command in [
         "thank you",
@@ -243,7 +319,9 @@ def smart_command(command):
 
         return "You're welcome, Raj."
 
-    # ---------------- Bye ---------------- #
+    # =====================================================
+    # BYE
+    # =====================================================
 
     elif command in [
         "bye",
@@ -253,7 +331,9 @@ def smart_command(command):
 
         return "Goodbye Raj. Have a great day."
 
-    # ---------------- Exit ---------------- #
+    # =====================================================
+    # EXIT
+    # =====================================================
 
     elif command in [
         "exit",
@@ -267,6 +347,8 @@ def smart_command(command):
 
         return "exit"
 
-    # ---------------- Unknown ---------------- #
+    # =====================================================
+    # UNKNOWN
+    # =====================================================
 
     return None
