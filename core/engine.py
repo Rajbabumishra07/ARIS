@@ -1,54 +1,21 @@
 """
-ARIS V18.0 Stable Core Engine
+ARIS V17.9 Core Engine
 Author : Raj Babu Mishra
+
+P1.1 Context Upgrade
 """
 
-import time
-
-t = time.perf_counter()
-
 from brain.nlu import nlu
-print(f"brain.nlu          : {time.perf_counter()-t:.2f}s")
-
-t = time.perf_counter()
 from brain.context import context
-print(f"brain.context      : {time.perf_counter()-t:.2f}s")
-
-t = time.perf_counter()
-from brain.router import router
-print(f"brain.router       : {time.perf_counter()-t:.2f}s")
-
-t = time.perf_counter()
 from brain.reasoning import reasoning
-print(f"brain.reasoning    : {time.perf_counter()-t:.2f}s")
-
-t = time.perf_counter()
 from brain.decision import decision
-print(f"brain.decision     : {time.perf_counter()-t:.2f}s")
-
-t = time.perf_counter()
 from brain.planner import planner
-print(f"brain.planner      : {time.perf_counter()-t:.2f}s")
-
-t = time.perf_counter()
 from brain.command_recovery import command_recovery
-print(f"command_recovery   : {time.perf_counter()-t:.2f}s")
-
-t = time.perf_counter()
 from brain.speech_recovery import speech_recovery
-print(f"speech_recovery    : {time.perf_counter()-t:.2f}s")
 
-t = time.perf_counter()
 from core.memory import memory
-print(f"core.memory        : {time.perf_counter()-t:.2f}s")
-
-t = time.perf_counter()
 from core.commands import execute
-print(f"core.commands      : {time.perf_counter()-t:.2f}s")
-
-t = time.perf_counter()
 from core.identity import aris
-print(f"core.identity      : {time.perf_counter()-t:.2f}s")
 
 
 class Engine:
@@ -61,300 +28,369 @@ class Engine:
         self.last_intent = ""
         self.last_response = ""
 
-        # V18 Pipeline State
-
-        self.last_plan = None
-        self.last_reasoning = None
-        self.last_decision = None
-        self.last_route = None
-
-    # ------------------------------------------------ #
+    # =====================================================
+    # PROCESS COMMAND
+    # =====================================================
 
     def process(self, command):
 
-        command = command.strip()
+        command = str(command).strip()
 
         if not command:
             return None
 
-        # ---------------- Context ---------------- #
+        # -------------------------------------------------
+        # Resolve follow-up BEFORE remembering it
+        # -------------------------------------------------
 
-        context.remember(command)
+        resolved_command = context.resolve(command)
 
-        command = context.resolve(command)
+        if not resolved_command:
+            return None
 
-        # ---------------- NLU ---------------- #
+        # -------------------------------------------------
+        # Normalize
+        # -------------------------------------------------
 
-        text = nlu.normalize(command)
+        text = nlu.normalize(resolved_command)
 
-        # ---------------- Speech Recovery ---------------- #
+        # -------------------------------------------------
+        # Speech Recovery
+        # -------------------------------------------------
 
         text = speech_recovery(text)
 
-        # ---------------- Command Recovery ---------------- #
+        # -------------------------------------------------
+        # Command Recovery
+        # -------------------------------------------------
 
         text = command_recovery.recover(text)
 
-        intent = nlu.intent(text)
+        if not text:
+            return None
 
+        # -------------------------------------------------
+        # NLU
+        # -------------------------------------------------
+
+        intent = nlu.intent(text)
         entities = nlu.entities(text)
 
+        # -------------------------------------------------
+        # Context Update
+        #
+        # IMPORTANT:
+        # Remember the resolved command, not "again".
+        # -------------------------------------------------
+
+        subject = (
+            entities.get("query")
+            or entities.get("subject")
+            or ""
+        )
+
+        app = (
+            entities.get("app")
+            or ""
+        )
+
+        context.remember(
+            text,
+            intent=intent or "",
+            subject=subject,
+            app=app
+        )
+
+        context.update(
+            intent=intent or "",
+            subject=subject,
+            app=app
+        )
+
         self.last_command = text
-        self.last_intent = intent
+        self.last_intent = intent or ""
 
-        # ---------------- Planner ---------------- #
-
-        plan = planner.create_plan(text)
-        self.last_plan = plan
-
-        # ---------------- Decision ---------------- #
-
-        decision_result = decision.decide(text)
-        self.last_decision = decision_result
-
-        # ---------------- Reasoning ---------------- #
-
-        reasoning_result = reasoning.think(text)
-        self.last_reasoning = reasoning_result
-
-        # ---------------- Router ---------------- #
-
-        route_result = router.route(text)
-        self.last_route = route_result
-
-        # ---------------- Greeting ---------------- #
+        # -------------------------------------------------
+        # Greeting
+        # -------------------------------------------------
 
         if intent == "greeting":
 
-            self.last_response = "Hello Sir. Welcome back."
+            response = "Hello Sir. Welcome back."
 
-            return self.last_response
+            context.set_response(response)
 
-        # ---------------- Ask ARIS Name ---------------- #
+            self.last_response = response
+
+            return response
+
+        # -------------------------------------------------
+        # Ask ARIS Name
+        # -------------------------------------------------
 
         if intent == "ask_name":
 
-            self.last_response = (
+            response = (
                 f"{aris.greeting}\n"
                 f"My name is {aris.name}."
             )
 
-            return self.last_response
+            context.set_response(response)
 
-        # ---------------- Creator ---------------- #
+            self.last_response = response
 
-        if intent == "ask_creator":
+            return response
 
-            self.last_response = aris.creator_info()
-
-            return self.last_response
-
-        # ---------------- Owner ---------------- #
-
-        if intent == "ask_owner":
-
-            self.last_response = aris.owner_info()
-
-            return self.last_response
-
-        # ---------------- Version ---------------- #
-
-        if intent == "ask_version":
-
-            self.last_response = aris.version_info()
-
-            return self.last_response
-
-        # ---------------- Identity ---------------- #
-
-        if intent == "ask_identity":
-
-            self.last_response = aris.introduce()
-
-            return self.last_response
-
-        # ---------------- Purpose ---------------- #
-
-        if intent == "ask_purpose":
-
-            self.last_response = aris.purpose_info()
-
-            return self.last_response
-
-        # ---------------- Full Form ---------------- #
-
-        if intent == "ask_full_form":
-
-            self.last_response = aris.full_form_info()
-
-            return self.last_response
-
-        # ---------------- Ask User Name ---------------- #
+        # -------------------------------------------------
+        # Ask User Name
+        # -------------------------------------------------
 
         if intent == "ask_my_name":
 
-            profile = self.memory.get_profile()
+            profile = memory.get_profile()
 
-            name = profile.get("name", "").strip()
+            name = profile.get(
+                "name",
+                ""
+            ).strip()
 
             if name:
 
-                self.last_response = (
+                response = (
                     f"Sir, your name is {name}."
                 )
 
             else:
 
-                self.last_response = (
+                response = (
                     "Sir, I don't know your name yet."
                 )
 
-            return self.last_response
+            context.set_response(response)
 
-        # ---------------- Favorite Color ---------------- #
+            self.last_response = response
+
+            return response
+
+        # -------------------------------------------------
+        # Favorite Color
+        # -------------------------------------------------
 
         if intent == "ask_favorite_color":
 
-            pref = self.memory.get_preferences()
+            preferences = memory.get_preferences()
 
-            color = pref.get(
+            color = preferences.get(
                 "favorite_color",
                 ""
             ).strip()
 
             if color:
 
-                self.last_response = (
+                response = (
                     f"Sir, your favorite color is {color}."
                 )
 
             else:
 
-                self.last_response = (
+                response = (
                     "Sir, I don't know your favorite color yet."
                 )
 
-            return self.last_response
-
-        # ---------------- Remember ---------------- #
-
-        if intent == "remember":
-
-            query = entities.get("query", "").strip()
-
-            if not query:
-
-                return "Sir, what should I remember?"
-
-            self.memory.remember(query)
-
-            self.last_response = (
-                "Sir, I have remembered it."
-            )
-
-            return self.last_response
-
-        # ---------------- Search ---------------- #
-
-        if intent == "search":
-
-            keyword = entities.get("query", "").strip()
-
-            if not keyword:
-
-                return "Sir, what should I search?"
-
-            result = self.memory.search(keyword)
-
-            if result:
-
-                self.last_response = "\n".join(result)
-
-            else:
-
-                self.last_response = (
-                    "Sir, I couldn't find anything."
-                )
-
-            return self.last_response
-
-        # ---------------- Window & App Commands ---------------- #
-
-        if intent in (
-            "open",
-            "close",
-            "minimize",
-            "maximize",
-            "restore",
-            "switch"
-        ):
-
-            response = execute(text)
-
-            if response:
-
-                self.last_response = response
-
-                return response
-
-        # ---------------- Exit ---------------- #
-
-        if intent == "exit":
-
-            return "exit"
-
-        # ---------------- Execute ---------------- #
-
-        response = execute(text)
-
-        if response:
+            context.set_response(response)
 
             self.last_response = response
 
             return response
 
-            # ---------------- Planner ---------------- #
+        # -------------------------------------------------
+        # Remember
+        # -------------------------------------------------
 
-        planner_intents = {
-            "plan",
-            "planning",
-            "goal"
-        }
+        if intent == "remember":
 
-        if intent in planner_intents:
+            query = entities.get(
+                "query",
+                ""
+            ).strip()
 
-            step = planner.next_step(self.last_plan)
+            if not query:
 
-            if step:
+                response = (
+                    "Sir, what should I remember?"
+                )
 
-                self.last_response = step
+                context.set_response(response)
 
-                return step
+                self.last_response = response
 
-        # ---------------- Context Reply ---------------- #
+                return response
+
+            memory.remember(query)
+
+            response = (
+                "Sir, I have remembered it."
+            )
+
+            context.set_response(response)
+
+            self.last_response = response
+
+            return response
+
+        # -------------------------------------------------
+        # Search Memory
+        # -------------------------------------------------
+
+        if intent == "search":
+
+            keyword = entities.get(
+                "query",
+                ""
+            ).strip()
+
+            if not keyword:
+
+                response = (
+                    "Sir, what should I search?"
+                )
+
+                context.set_response(response)
+
+                self.last_response = response
+
+                return response
+
+            result = memory.search(keyword)
+
+            if result:
+
+                response = "\n".join(result)
+
+            else:
+
+                response = (
+                    "Sir, I couldn't find anything."
+                )
+
+            context.set_response(response)
+
+            self.last_response = response
+
+            return response
+
+        # -------------------------------------------------
+        # Exit
+        # -------------------------------------------------
+
+        if intent == "exit":
+
+            context.set_response("exit")
+
+            self.last_response = "exit"
+
+            return "exit"
+
+        # =================================================
+        # SINGLE COMMAND ROUTER
+        # =================================================
+
+        response = execute(text)
+
+        if response:
+
+            context.set_response(response)
+
+            self.last_response = response
+
+            return response
+
+        # -------------------------------------------------
+        # Planner
+        # -------------------------------------------------
 
         try:
 
-            previous = context.last_response()
+            plan = planner.create_plan(text)
 
-            if previous:
+            if plan:
 
-                self.last_response = previous
+                step = planner.next_step(plan)
 
-                return previous
+                if step:
+
+                    context.set_response(step)
+
+                    self.last_response = step
+
+                    return step
 
         except Exception:
 
             pass
 
-        # ---------------- Unknown ---------------- #
+        # -------------------------------------------------
+        # Decision
+        # -------------------------------------------------
 
-        self.last_response = (
+        try:
+
+            decision_result = decision.decide(text)
+
+            if decision_result:
+
+                context.set_response(
+                    decision_result
+                )
+
+                self.last_response = (
+                    decision_result
+                )
+
+                return decision_result
+
+        except Exception:
+
+            pass
+
+        # -------------------------------------------------
+        # Reasoning
+        # -------------------------------------------------
+
+        try:
+
+            reasoning_result = reasoning.think(text)
+
+            if reasoning_result:
+
+                context.set_response(
+                    reasoning_result
+                )
+
+                self.last_response = (
+                    reasoning_result
+                )
+
+                return reasoning_result
+
+        except Exception:
+
+            pass
+
+        # -------------------------------------------------
+        # Unknown
+        # -------------------------------------------------
+
+        response = (
             "Sir, I didn't understand that.\n"
             "Could you please say it differently?"
         )
 
-        return self.last_response
+        context.set_response(response)
+
+        self.last_response = response
+
+        return response
 
 
 engine = Engine()

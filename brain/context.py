@@ -1,6 +1,8 @@
 """
-ARIS V14 Context Engine
+ARIS V17.9 Context Engine
 Author : Raj Babu Mishra
+
+P1.2 Context Upgrade
 """
 
 from collections import deque
@@ -18,21 +20,45 @@ class ContextEngine:
         self.last_app = ""
         self.last_response = ""
 
-    # ---------------- Remember ---------------- #
+    # =====================================================
+    # REMEMBER
+    # =====================================================
 
-    def remember(self, command, intent="", subject="", app=""):
+    def remember(
+        self,
+        command,
+        intent="",
+        subject="",
+        app=""
+    ):
 
-        command = command.strip()
+        command = str(command).strip()
 
-        self.history.append({
+        if not command:
+            return
+
+        # -------------------------------------------------
+        # Extract useful target from file/folder commands
+        # -------------------------------------------------
+
+        extracted_subject = self._extract_target(command)
+
+        if extracted_subject:
+            subject = extracted_subject
+
+        entry = {
             "command": command,
             "intent": intent,
             "subject": subject,
             "app": app
-        })
+        }
+
+        self.history.append(entry)
 
         self.last_command = command
-        self.last_intent = intent
+
+        if intent:
+            self.last_intent = intent
 
         if subject:
             self.last_subject = subject
@@ -40,11 +66,87 @@ class ContextEngine:
         if app:
             self.last_app = app
 
-    # ---------------- Resolve ---------------- #
+    # =====================================================
+    # TARGET EXTRACTION
+    # =====================================================
+
+    def _extract_target(self, command):
+
+        text = command.lower().strip()
+
+        prefixes = (
+            "open file ",
+            "open folder ",
+            "create file ",
+            "create folder ",
+            "make file ",
+            "make folder ",
+            "delete file ",
+            "delete folder ",
+            "rename file ",
+            "rename folder ",
+            "copy file ",
+            "copy folder ",
+            "move file ",
+            "move folder "
+        )
+
+        for prefix in prefixes:
+
+            if text.startswith(prefix):
+
+                target = text[len(prefix):].strip()
+
+                # For rename/copy/move:
+                # keep the source object, not destination.
+
+                if " to " in target:
+
+                    target = target.split(
+                        " to ",
+                        1
+                    )[0].strip()
+
+                if target:
+
+                    return target
+
+        return ""
+
+    # =====================================================
+    # UPDATE
+    # =====================================================
+
+    def update(
+        self,
+        intent="",
+        subject="",
+        app=""
+    ):
+
+        if intent:
+            self.last_intent = intent
+
+        if subject:
+            self.last_subject = subject
+
+        if app:
+            self.last_app = app
+
+    # =====================================================
+    # RESOLVE FOLLOW-UP
+    # =====================================================
 
     def resolve(self, command):
 
-        text = command.lower().strip()
+        text = str(command).lower().strip()
+
+        if not text:
+            return ""
+
+        # -------------------------------------------------
+        # AGAIN / REPEAT
+        # -------------------------------------------------
 
         if text in (
             "again",
@@ -52,50 +154,87 @@ class ContextEngine:
             "dobara",
             "phir",
             "fir",
-            "once more"
+            "once more",
+            "do it again"
         ):
+
             return self.last_command
 
-        replace = {
+        # -------------------------------------------------
+        # IT / THIS / THAT
+        #
+        # Only resolve when a real previous target exists.
+        # -------------------------------------------------
 
-            "it": self.last_subject,
-            "this": self.last_subject,
-            "that": self.last_subject,
-            "him": self.last_subject,
-            "her": self.last_subject,
-            "usko": self.last_subject,
-            "vo": self.last_subject,
-            "wah": self.last_subject,
-
-            "app": self.last_app,
-            "application": self.last_app
-
+        target_words = {
+            "it",
+            "this",
+            "that",
+            "isko",
+            "usko",
+            "isko",
+            "vo",
+            "woh",
+            "wah"
         }
 
         words = text.split()
 
-        output = []
+        if len(words) == 2 and words[1] in target_words:
 
-        for word in words:
+            prefix = words[0]
 
-            if word in replace and replace[word]:
-                output.append(replace[word])
-            else:
-                output.append(word)
+            if self.last_subject:
 
-        return " ".join(output)
+                return (
+                    f"{prefix} {self.last_subject}"
+                )
 
-    # ---------------- Response ---------------- #
+        # -------------------------------------------------
+        # Exact standalone reference
+        # -------------------------------------------------
+
+        if text in target_words:
+
+            if self.last_subject:
+
+                return self.last_subject
+
+            return text
+
+        # -------------------------------------------------
+        # Normal command
+        # -------------------------------------------------
+
+        return text
+
+    # =====================================================
+    # RESPONSE
+    # =====================================================
 
     def set_response(self, response):
 
-        self.last_response = response
+        self.last_response = (
+            str(response).strip()
+            if response is not None
+            else ""
+        )
 
     def response(self):
 
         return self.last_response
 
-    # ---------------- History ---------------- #
+    def last_response_text(self):
+
+        return self.last_response
+
+    def get_response(self):
+
+        return self.last_response
+
+    # =====================================================
+    # HISTORY
+    # =====================================================
 
     def previous(self):
 
@@ -111,7 +250,30 @@ class ContextEngine:
 
         return self.history[-1]
 
-    # ---------------- Clear ---------------- #
+    def recent(self, count=5):
+
+        if count <= 0:
+            return []
+
+        return list(self.history)[-count:]
+
+    # =====================================================
+    # CURRENT CONTEXT
+    # =====================================================
+
+    def current(self):
+
+        return {
+            "command": self.last_command,
+            "intent": self.last_intent,
+            "subject": self.last_subject,
+            "app": self.last_app,
+            "response": self.last_response
+        }
+
+    # =====================================================
+    # CLEAR
+    # =====================================================
 
     def clear(self):
 

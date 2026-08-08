@@ -1,9 +1,10 @@
 """
-ARIS V18 Core Command Executor
+ARIS V17.9 Core Command Executor
 Author : Raj Babu Mishra
 
-P0.2.2
-Single Command Router
+P1.3 Step 2
+Core Router Deduplication
+Context-aware Routing
 Lazy System Imports
 """
 
@@ -11,6 +12,26 @@ from brain.action_memory import action_memory
 
 from core.file_commands import execute_file
 from core.folder_commands import execute_folder
+
+
+# =========================================================
+# COMMAND PREFIXES
+# =========================================================
+
+OPEN_COMMANDS = (
+    "open ",
+    "launch ",
+    "start ",
+    "run ",
+)
+
+
+def _is_open_command(command):
+    return command.startswith(OPEN_COMMANDS)
+
+
+def _get_target(command):
+    return command.split(" ", 1)[1].strip()
 
 
 # =========================================================
@@ -24,7 +45,7 @@ def execute(command):
     if not command:
         return None
 
-    command = command.lower().strip()
+    command = str(command).lower().strip()
 
     if not command:
         return None
@@ -33,16 +54,12 @@ def execute(command):
     # ACTION MEMORY
     # =====================================================
 
-    if (
-        command.startswith("open ")
-        or command.startswith("launch ")
-        or command.startswith("start ")
-        or command.startswith("run ")
-    ):
+    if _is_open_command(command):
 
-        target = command.split(" ", 1)[1].strip()
+        target = _get_target(command)
 
         if target:
+
             action_memory.remember(
                 "open",
                 target
@@ -50,9 +67,10 @@ def execute(command):
 
     elif command.startswith("play "):
 
-        target = command.split(" ", 1)[1].strip()
+        target = _get_target(command)
 
         if target:
+
             action_memory.remember(
                 "play",
                 target
@@ -150,6 +168,54 @@ def execute(command):
         return result
 
     # =====================================================
+    # CONTEXT-AWARE FILE OPEN
+    # =====================================================
+
+    if command.startswith("open "):
+
+        target = command[5:].strip()
+
+        if target:
+
+            file_extensions = (
+                ".txt",
+                ".py",
+                ".pdf",
+                ".doc",
+                ".docx",
+                ".xls",
+                ".xlsx",
+                ".ppt",
+                ".pptx",
+                ".jpg",
+                ".jpeg",
+                ".png",
+                ".gif",
+                ".bmp",
+                ".webp",
+                ".mp3",
+                ".wav",
+                ".mp4",
+                ".mkv",
+                ".csv",
+                ".json",
+                ".xml",
+                ".html",
+                ".css",
+                ".js",
+                ".zip",
+            )
+
+            if target.lower().endswith(file_extensions):
+
+                result = execute_file(
+                    f"open file {target}"
+                )
+
+                if result is not None:
+                    return result
+
+    # =====================================================
     # FOLDER ROUTER
     # =====================================================
 
@@ -162,19 +228,11 @@ def execute(command):
     # SMART APP LAUNCHER
     # =====================================================
 
-    if (
-        command.startswith("open ")
-        or command.startswith("launch ")
-        or command.startswith("start ")
-        or command.startswith("run ")
-    ):
+    if _is_open_command(command):
 
         from system.app_launcher import launch
 
-        app = command.split(
-            " ",
-            1
-        )[1].strip()
+        app = _get_target(command)
 
         if app:
 
@@ -230,7 +288,7 @@ def execute(command):
         return result
 
     # =====================================================
-    # LEGACY APP ROUTER
+    # LEGACY APPS
     # =====================================================
 
     from system.apps import open_app
@@ -244,23 +302,15 @@ def execute(command):
     # FILE MANAGER
     # =====================================================
 
-    if (
-        command.startswith("open ")
-        or command.startswith("launch ")
-        or command.startswith("start ")
-        or command.startswith("run ")
-    ):
+    if _is_open_command(command):
 
         from system.file_manager import file_manager
 
-        folder = command.split(
-            " ",
-            1
-        )[1].strip()
+        target = _get_target(command)
 
-        if folder:
+        if target:
 
-            response = file_manager.open(folder)
+            response = file_manager.open(target)
 
             if response is not None:
                 return response
