@@ -2,8 +2,9 @@
 ARIS V17.9 Stable Core Engine
 Author : Raj Babu Mishra
 
-P1.4
+P1.5
 Information Command Routing
+Location-aware Weather
 Context-aware Execution
 """
 
@@ -22,6 +23,8 @@ from core.memory import memory
 from core.commands import execute
 from core.identity import aris
 
+from ai.weather import get_weather
+
 
 class Engine:
 
@@ -39,9 +42,14 @@ class Engine:
 
     def _information_command(self, text):
 
-        command = text.lower().strip()
+        command = str(text).lower().strip()
 
-        # ---------------- Time ----------------
+        if not command:
+            return None
+
+        # =================================================
+        # TIME
+        # =================================================
 
         if command in (
             "time",
@@ -53,7 +61,9 @@ class Engine:
 
             return datetime.now().strftime("%I:%M %p")
 
-        # ---------------- Date ----------------
+        # =================================================
+        # DATE
+        # =================================================
 
         if command in (
             "date",
@@ -65,7 +75,9 @@ class Engine:
 
             return datetime.now().strftime("%d-%m-%Y")
 
-        # ---------------- Month ----------------
+        # =================================================
+        # MONTH
+        # =================================================
 
         if command in (
             "month",
@@ -76,7 +88,9 @@ class Engine:
 
             return datetime.now().strftime("%B")
 
-        # ---------------- Year ----------------
+        # =================================================
+        # YEAR
+        # =================================================
 
         if command in (
             "year",
@@ -87,7 +101,9 @@ class Engine:
 
             return datetime.now().strftime("%Y")
 
-        # ---------------- Calendar ----------------
+        # =================================================
+        # CALENDAR
+        # =================================================
 
         if command in (
             "calendar",
@@ -98,16 +114,121 @@ class Engine:
 
             return datetime.now().strftime("%B %Y")
 
-        # ---------------- Weather ----------------
+        # =================================================
+        # WEATHER
+        # =================================================
 
-        if command in (
+        default_weather_commands = (
             "weather",
             "current weather",
             "what is the weather",
-            "what's the weather"
-        ):
+            "what's the weather",
+            "tell me the weather",
+            "tell me weather",
+            "what is weather",
+            "what's weather"
+        )
 
-            return "Weather module will be added soon."
+        # -------------------------------------------------
+        # Default location
+        # -------------------------------------------------
+
+        if command in default_weather_commands:
+
+            return get_weather("Prayagraj")
+
+        # -------------------------------------------------
+        # weather <city>
+        #
+        # Example:
+        # weather delhi
+        # weather prayagraj
+        # -------------------------------------------------
+
+        if command.startswith("weather "):
+
+            city = command[len("weather "):].strip()
+
+            if city:
+                return get_weather(city)
+
+        # -------------------------------------------------
+        # current weather <city>
+        # -------------------------------------------------
+
+        if command.startswith("current weather "):
+
+            city = command[
+                len("current weather "):
+            ].strip()
+
+            if city:
+                return get_weather(city)
+
+        # -------------------------------------------------
+        # what is the weather in <city>
+        # -------------------------------------------------
+
+        if command.startswith("what is the weather in "):
+
+            city = command[
+                len("what is the weather in "):
+            ].strip()
+
+            if city:
+                return get_weather(city)
+
+        # -------------------------------------------------
+        # what is weather in <city>
+        # -------------------------------------------------
+
+        if command.startswith("what is weather in "):
+
+            city = command[
+                len("what is weather in "):
+            ].strip()
+
+            if city:
+                return get_weather(city)
+
+        # -------------------------------------------------
+        # what's the weather in <city>
+        # -------------------------------------------------
+
+        if command.startswith("what's the weather in "):
+
+            city = command[
+                len("what's the weather in "):
+            ].strip()
+
+            if city:
+                return get_weather(city)
+
+        # -------------------------------------------------
+        # what's weather in <city>
+        # -------------------------------------------------
+
+        if command.startswith("what's weather in "):
+
+            city = command[
+                len("what's weather in "):
+            ].strip()
+
+            if city:
+                return get_weather(city)
+
+        # -------------------------------------------------
+        # tell me the weather in <city>
+        # -------------------------------------------------
+
+        if command.startswith("tell me the weather in "):
+
+            city = command[
+                len("tell me the weather in "):
+            ].strip()
+
+            if city:
+                return get_weather(city)
 
         return None
 
@@ -117,7 +238,10 @@ class Engine:
 
     def process(self, command):
 
-        command = command.strip()
+        if command is None:
+            return None
+
+        command = str(command).strip()
 
         if not command:
             return None
@@ -159,7 +283,7 @@ class Engine:
         # INFORMATION COMMANDS
         #
         # IMPORTANT:
-        # These commands must be handled BEFORE
+        # Information commands are handled BEFORE
         # core.commands.execute().
         # =================================================
 
@@ -269,7 +393,8 @@ class Engine:
             else:
 
                 self.last_response = (
-                    "Sir, I don't know your favorite color yet."
+                    "Sir, I don't know your "
+                    "favorite color yet."
                 )
 
             return self.last_response
@@ -287,7 +412,9 @@ class Engine:
 
             if not query:
 
-                return "Sir, what should I remember?"
+                return (
+                    "Sir, what should I remember?"
+                )
 
             self.memory.remember(query)
 
@@ -310,7 +437,9 @@ class Engine:
 
             if not keyword:
 
-                return "Sir, what should I search?"
+                return (
+                    "Sir, what should I search?"
+                )
 
             result = self.memory.search(keyword)
 
