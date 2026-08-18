@@ -1,11 +1,23 @@
 """
-ARIS V17.8 Smart Intent Engine
+ARIS V18 Smart Intent Engine
 Author : Raj Babu Mishra
+
+P1.6
+Information Intent Routing
 """
 
 from difflib import SequenceMatcher
 
+
+# =========================================================
+# INTENTS
+# =========================================================
+
 INTENTS = {
+
+    # =====================================================
+    # GREETING
+    # =====================================================
 
     "greeting": [
         "hello",
@@ -17,13 +29,107 @@ INTENTS = {
         "good evening"
     ],
 
+    # =====================================================
+    # TIME
+    # =====================================================
+
+    "time": [
+        "time",
+        "what is the time",
+        "what is time",
+        "what's the time",
+        "whats the time",
+        "tell me the time",
+        "current time",
+        "what time is it"
+    ],
+
+    # =====================================================
+    # DATE
+    # =====================================================
+
+    "date": [
+        "date",
+        "today date",
+        "today's date",
+        "what is the date",
+        "what's the date",
+        "whats the date",
+        "what is today's date"
+    ],
+
+    # =====================================================
+    # MONTH
+    # =====================================================
+
+    "month": [
+        "month",
+        "current month",
+        "what month is this",
+        "which month is this",
+        "what is the current month"
+    ],
+
+    # =====================================================
+    # YEAR
+    # =====================================================
+
+    "year": [
+        "year",
+        "current year",
+        "what year is this",
+        "which year is this",
+        "what is the current year"
+    ],
+
+    # =====================================================
+    # CALENDAR
+    # =====================================================
+
+    "calendar": [
+        "calendar",
+        "calender",
+        "show calendar",
+        "show calender",
+        "current calendar",
+        "this month calendar"
+    ],
+
+    # =====================================================
+    # WEATHER
+    # =====================================================
+
+    "weather": [
+        "weather",
+        "current weather",
+        "what is the weather",
+        "what's the weather",
+        "whats the weather",
+        "tell me the weather",
+        "weather today",
+        "how is the weather",
+        "how's the weather",
+        "weather in",
+        "weather at",
+        "weather for"
+    ],
+
+    # =====================================================
+    # EXIT
+    # =====================================================
+
     "exit": [
         "exit",
         "quit",
         "stop",
         "bye",
-        "goodbye"
+        "goodbye",
+        "stop listening"
     ],
+
+    # =====================================================
+    # AGAIN / REPEAT
+    # =====================================================
 
     "again": [
         "again",
@@ -31,6 +137,10 @@ INTENTS = {
         "once again",
         "one more time"
     ],
+
+    # =====================================================
+    # IDENTITY
+    # =====================================================
 
     "ask_name": [
         "who are you",
@@ -49,53 +159,9 @@ INTENTS = {
         "do you know my name"
     ],
 
-    "ask_favorite_color": [
-        "what is my favorite color",
-        "whats my favorite color",
-        "what's my favorite color",
-        "tell me my favorite color"
-    ],
-
-    "ask_creator": [
-        "who created you",
-        "who made you",
-        "who is your creator",
-        "who developed you"
-    ],
-
-    "ask_owner": [
-        "who is your owner",
-        "who owns you",
-        "who is your master"
-    ],
-
-    "ask_version": [
-        "what is your version",
-        "tell me your version",
-        "your version",
-        "version"
-    ],
-
-    "ask_identity": [
-        "what is aris",
-        "tell me about yourself",
-        "introduce yourself",
-        "introduce",
-        "about yourself"
-    ],
-
-    "ask_purpose": [
-        "why were you created",
-        "what is your purpose",
-        "what can you do",
-        "why do you exist"
-    ],
-
-    "ask_full_form": [
-        "full form of aris",
-        "what does aris stand for",
-        "aris full form"
-    ],
+    # =====================================================
+    # MEMORY
+    # =====================================================
 
     "remember": [
         "remember",
@@ -105,6 +171,10 @@ INTENTS = {
         "note"
     ],
 
+    # =====================================================
+    # SEARCH
+    # =====================================================
+
     "search": [
         "search",
         "search for",
@@ -113,6 +183,10 @@ INTENTS = {
         "look for"
     ],
 
+    # =====================================================
+    # OPEN
+    # =====================================================
+
     "open": [
         "open",
         "launch",
@@ -120,11 +194,19 @@ INTENTS = {
         "run"
     ],
 
+    # =====================================================
+    # CLOSE
+    # =====================================================
+
     "close": [
         "close",
         "terminate",
         "kill"
     ],
+
+    # =====================================================
+    # WINDOW CONTROL
+    # =====================================================
 
     "minimize": [
         "minimize"
@@ -145,37 +227,93 @@ INTENTS = {
 }
 
 
+# =========================================================
+# INTENT MATCHER
+# =========================================================
+
 def match_intent(text):
+
+    if not text:
+        return None
 
     text = text.lower().strip()
 
     words = text.split()
+
+    # =====================================================
+    # HIGH PRIORITY INFORMATION COMMANDS
+    # =====================================================
+
+    # Weather must be checked before generic search/open
+    # because phrases such as:
+    # "what is the weather in Lucknow"
+    # contain additional words.
+
+    if "weather" in text:
+
+        return "weather"
+
+    # =====================================================
+    # EXACT INFORMATION MATCH
+    # =====================================================
+
+    for intent in (
+        "time",
+        "date",
+        "month",
+        "year",
+        "calendar"
+    ):
+
+        for pattern in INTENTS[intent]:
+
+            if text == pattern.lower():
+
+                return intent
+
+    # =====================================================
+    # HIGH PRIORITY COMMANDS
+    # =====================================================
 
     if words:
 
         first = words[0]
 
         priority = {
+
             "open": "open",
             "launch": "open",
             "start": "open",
             "run": "open",
+
             "close": "close",
+
             "minimize": "minimize",
             "maximize": "maximize",
             "restore": "restore",
+
             "switch": "switch"
         }
 
         if first in priority:
+
             return priority[first]
+
+    # =====================================================
+    # EXACT MATCH
+    # =====================================================
 
     for intent, patterns in INTENTS.items():
 
         for pattern in patterns:
 
             if text == pattern.lower():
+
                 return intent
+
+    # =====================================================
+    # SMART FUZZY MATCH
+    # =====================================================
 
     best_intent = None
     best_score = 0
@@ -186,30 +324,40 @@ def match_intent(text):
 
             pattern = pattern.lower()
 
-            score = 0
-
             similarity = SequenceMatcher(
                 None,
                 text,
                 pattern
             ).ratio()
 
-            score += int(similarity * 20)
+            score = int(similarity * 20)
 
             if pattern in text:
+
                 score += 20
 
+            if text.startswith(pattern):
+
+                score += 10
+
             if score > best_score:
+
                 best_score = score
                 best_intent = intent
 
     if best_score >= 45:
+
         return best_intent
 
     return None
 
 
+# =========================================================
+# HELPERS
+# =========================================================
+
 def has_intent(text, intent_name):
+
     return match_intent(text) == intent_name
 
 
@@ -217,9 +365,14 @@ def get_score(text):
 
     scores = {}
 
+    matched = match_intent(text)
+
     for intent in INTENTS:
+
         scores[intent] = (
-            100 if match_intent(text) == intent else 0
+            100
+            if matched == intent
+            else 0
         )
 
     return scores
