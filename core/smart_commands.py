@@ -1,7 +1,17 @@
+"""
+ARIS V17.9 Smart Command Engine
+Author : Raj Babu Mishra
+
+P1.4
+Information Command Routing
+Single Core Execution Path
+"""
+
 from core.commands import execute
 from ai.search import internet_search
 from ai.nlp import normalize_command
 from ai.personal_ai import personal_ai
+from ai.weather import weather
 from brain.suggestions import suggestion
 
 from brain.conversation import conversation
@@ -18,6 +28,9 @@ def smart_command(command):
     command = normalize_command(command)
     command = command.lower().strip()
 
+    if not command:
+        return None
+
     # =====================================================
     # CONVERSATION
     # =====================================================
@@ -26,6 +39,21 @@ def smart_command(command):
 
     if result:
         return result
+
+    # =====================================================
+    # REPEAT / CONTEXT
+    # =====================================================
+
+    if command in [
+        "again",
+        "repeat",
+        "once more"
+    ]:
+
+        cmd = repeat_last()
+
+        if cmd:
+            command = cmd
 
     # =====================================================
     # SUGGESTIONS
@@ -46,19 +74,55 @@ def smart_command(command):
         return result
 
     # =====================================================
-    # REPEAT / CONTEXT
+    # BASIC INFORMATION
+    #
+    # These commands must NOT enter core.commands.
     # =====================================================
 
     if command in [
-        "again",
-        "repeat",
-        "once more"
+        "time",
+        "what is the time",
+        "what is time",
+        "current time"
     ]:
 
-        cmd = repeat_last()
+        return datetime.now().strftime("%I:%M %p")
 
-        if cmd:
-            command = cmd
+    if command in [
+        "date",
+        "today date",
+        "today's date"
+    ]:
+
+        return datetime.now().strftime("%d-%m-%Y")
+
+    if command in [
+        "month",
+        "current month",
+        "which month is this"
+    ]:
+
+        return datetime.now().strftime("%B")
+
+    if command in [
+        "year",
+        "current year",
+        "which year is this"
+    ]:
+
+        return datetime.now().strftime("%Y")
+
+    if command in [
+        "calendar",
+        "calender",
+        "show calendar"
+    ]:
+
+        return datetime.now().strftime("%B %Y")
+
+    if command.startswith("weather"):
+
+        return "Weather module will be added soon."
 
     # =====================================================
     # PLAY MUSIC
@@ -82,7 +146,7 @@ def smart_command(command):
     # HANUMAN CHALISA
     # =====================================================
 
-    elif command in [
+    if command in [
         "hanuman chalisa",
         "play hanuman chalisa"
     ]:
@@ -97,52 +161,58 @@ def smart_command(command):
     # WEBSITES
     # =====================================================
 
-    elif command == "youtube":
+    if command == "youtube":
 
-        webbrowser.open(
-            "https://www.youtube.com"
-        )
+        webbrowser.open("https://www.youtube.com")
 
         return "Opening YouTube."
 
-    elif command == "google":
+    if command == "google":
 
-        webbrowser.open(
-            "https://www.google.com"
-        )
+        webbrowser.open("https://www.google.com")
 
         return "Opening Google."
 
-    elif command == "gmail":
+    if command == "gmail":
 
-        webbrowser.open(
-            "https://mail.google.com"
-        )
+        webbrowser.open("https://mail.google.com")
 
         return "Opening Gmail."
 
-    elif command == "github":
+    if command == "github":
 
-        webbrowser.open(
-            "https://github.com"
-        )
+        webbrowser.open("https://github.com")
 
         return "Opening GitHub."
 
-    elif command == "chatgpt":
+    if command == "chatgpt":
 
-        webbrowser.open(
-            "https://chatgpt.com"
-        )
+        webbrowser.open("https://chatgpt.com")
 
         return "Opening ChatGPT."
+
+        # =====================================================
+    # WEATHER
+    # =====================================================
+
+    if command == "weather":
+
+        return weather()
+
+    if command.startswith("weather "):
+
+        city = command.replace(
+            "weather",
+            "",
+            1
+        ).strip()
+
+        return weather(city)
 
     # =====================================================
     # CORE COMMAND EXECUTOR
     #
-    # Single execution path.
-    # File/folder/app/system commands are handled
-    # by core.commands.
+    # File / Folder / App / System / Window commands
     # =====================================================
 
     result = execute(command)
@@ -178,19 +248,19 @@ def smart_command(command):
     # BASIC AI
     # =====================================================
 
-    elif command == "who are you":
+    if command == "who are you":
 
         return "I am ARIS, your personal AI assistant."
 
-    elif command == "who made you":
+    if command == "who made you":
 
         return "I was created by Raj Babu Mishra."
 
-    elif command == "how are you":
+    if command == "how are you":
 
         return "I am doing great. Ready to help you."
 
-    elif command == "what can you do":
+    if command == "what can you do":
 
         return (
             "I can open apps, search Google, search YouTube, "
@@ -202,7 +272,7 @@ def smart_command(command):
     # CALCULATOR
     # =====================================================
 
-    elif command.startswith("calculate "):
+    if command.startswith("calculate "):
 
         expression = command.replace(
             "calculate",
@@ -212,9 +282,7 @@ def smart_command(command):
 
         try:
 
-            return str(
-                eval(expression)
-            )
+            return str(eval(expression))
 
         except Exception:
 
@@ -224,7 +292,7 @@ def smart_command(command):
     # WIKIPEDIA
     # =====================================================
 
-    elif command.startswith("wiki "):
+    if command.startswith("wiki "):
 
         topic = command.replace(
             "wiki",
@@ -258,44 +326,10 @@ def smart_command(command):
             return "No information found."
 
     # =====================================================
-    # TIME
-    # =====================================================
-
-    elif command in [
-        "time",
-        "what is the time"
-    ]:
-
-        return datetime.now().strftime(
-            "%I:%M %p"
-        )
-
-    # =====================================================
-    # DATE
-    # =====================================================
-
-    elif command in [
-        "date",
-        "today date"
-    ]:
-
-        return datetime.now().strftime(
-            "%d-%m-%Y"
-        )
-
-    # =====================================================
-    # WEATHER
-    # =====================================================
-
-    elif command.startswith("weather"):
-
-        return "Weather module will be added soon."
-
-    # =====================================================
     # NEWS
     # =====================================================
 
-    elif command == "news":
+    if command == "news":
 
         return "News module will be added soon."
 
@@ -303,7 +337,7 @@ def smart_command(command):
     # TRANSLATION
     # =====================================================
 
-    elif command.startswith("translate"):
+    if command.startswith("translate"):
 
         return "Translation module will be added soon."
 
@@ -311,7 +345,7 @@ def smart_command(command):
     # THANKS
     # =====================================================
 
-    elif command in [
+    if command in [
         "thank you",
         "thanks",
         "thankyou"
@@ -323,7 +357,7 @@ def smart_command(command):
     # BYE
     # =====================================================
 
-    elif command in [
+    if command in [
         "bye",
         "goodbye",
         "see you"
@@ -335,7 +369,7 @@ def smart_command(command):
     # EXIT
     # =====================================================
 
-    elif command in [
+    if command in [
         "exit",
         "quit",
         "stop",
