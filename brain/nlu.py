@@ -457,6 +457,9 @@ class NLU:
 
         return self.intent(text) == "ask_name"
 
+def is_ask_creator(self, text):
+    return self.intent(text) == "ask_creator"
+
     def is_ask_my_name(self, text):
 
         return self.intent(text) == "ask_my_name"

@@ -150,6 +150,19 @@ INTENTS = {
         "tell me your name"
     ],
 
+"ask_creator": [
+    "who made you",
+    "who created you",
+    "who is your creator",
+    "who is your owner",
+    "who developed you",
+    "who built you",
+    "who programmed you",
+    "who is your maker",
+    "tell me your creator",
+    "tell me who made you"
+],
+
     "ask_my_name": [
         "what is my name",
         "whats my name",

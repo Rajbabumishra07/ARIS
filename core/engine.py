@@ -372,6 +372,18 @@ class Engine:
             return self.last_response
 
         # =================================================
+        # ASK CREATOR
+        # =================================================
+
+        if intent == "ask_creator":
+
+           self.last_response = (
+               "I was created by Raj Babu Mishra."
+            )
+
+        return self.last_response
+
+        # =================================================
         # FAVORITE COLOR
         # =================================================
 
