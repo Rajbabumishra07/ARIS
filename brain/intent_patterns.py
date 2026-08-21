@@ -2,8 +2,8 @@
 ARIS V18 Smart Intent Engine
 Author : Raj Babu Mishra
 
-P1.6
-Information Intent Routing
+P1.9
+Intent Priority + Information Routing
 """
 
 from difflib import SequenceMatcher
@@ -55,7 +55,9 @@ INTENTS = {
         "what is the date",
         "what's the date",
         "whats the date",
-        "what is today's date"
+        "what is today's date",
+        "what is date",
+        "tell me the date"
     ],
 
     # =====================================================
@@ -150,18 +152,26 @@ INTENTS = {
         "tell me your name"
     ],
 
-"ask_creator": [
-    "who made you",
-    "who created you",
-    "who is your creator",
-    "who is your owner",
-    "who developed you",
-    "who built you",
-    "who programmed you",
-    "who is your maker",
-    "tell me your creator",
-    "tell me who made you"
-],
+    # =====================================================
+    # CREATOR
+    # =====================================================
+
+    "ask_creator": [
+        "who made you",
+        "who created you",
+        "who is your creator",
+        "who is your owner",
+        "who developed you",
+        "who built you",
+        "who programmed you",
+        "who is your maker",
+        "tell me your creator",
+        "tell me who made you"
+    ],
+
+    # =====================================================
+    # MY NAME
+    # =====================================================
 
     "ask_my_name": [
         "what is my name",
@@ -241,52 +251,322 @@ INTENTS = {
 
 
 # =========================================================
-# INTENT MATCHER
+# EXPLICIT COMMAND PREFIXES
+#
+# These MUST be checked before fuzzy matching.
+#
+# Examples:
+#
+# search weather       -> search
+# find weather         -> search
+# google weather       -> search
+#
+# remember my birthday -> remember
+# save my birthday     -> remember
+# store my birthday    -> remember
+#
+# open chrome          -> open
+# close chrome         -> close
 # =========================================================
 
-def match_intent(text):
+PREFIX_INTENTS = {
 
-    if not text:
-        return None
+    "search": (
+        "search ",
+        "search for ",
+        "find ",
+        "google ",
+        "look for "
+    ),
 
-    text = text.lower().strip()
+    "remember": (
+        "remember ",
+        "save ",
+        "store ",
+        "memorize ",
+        "note "
+    ),
 
-    words = text.split()
+    "open": (
+        "open ",
+        "launch ",
+        "start ",
+        "run "
+    ),
+
+    "close": (
+        "close ",
+        "terminate ",
+        "kill "
+    ),
+
+    "minimize": (
+        "minimize ",
+    ),
+
+    "maximize": (
+        "maximize ",
+    ),
+
+    "restore": (
+        "restore ",
+    ),
+
+    "switch": (
+        "switch ",
+        "switch to "
+    )
+}
+
+
+# =========================================================
+# PREFIX MATCH
+# =========================================================
+
+def _prefix_match(text):
+
+    for intent, prefixes in PREFIX_INTENTS.items():
+
+        for prefix in prefixes:
+
+            if text.startswith(prefix):
+
+                return intent
+
+    return None
+
+
+# =========================================================
+# INFORMATION PHRASE MATCH
+# =========================================================
+
+def _information_match(text):
 
     # =====================================================
-    # HIGH PRIORITY INFORMATION COMMANDS
+    # TIME
     # =====================================================
 
-    # Weather must be checked before generic search/open
-    # because phrases such as:
-    # "what is the weather in Lucknow"
-    # contain additional words.
+    time_patterns = (
+        "time",
+        "what is the time",
+        "what is time",
+        "what's the time",
+        "whats the time",
+        "tell me the time",
+        "current time",
+        "what time is it"
+    )
+
+    for pattern in time_patterns:
+
+        if text == pattern:
+
+            return "time"
+
+    # =====================================================
+    # DATE
+    # =====================================================
+
+    date_patterns = (
+        "date",
+        "today date",
+        "today's date",
+        "what is the date",
+        "what's the date",
+        "whats the date",
+        "what is today's date",
+        "what is date",
+        "tell me the date"
+    )
+
+    for pattern in date_patterns:
+
+        if text == pattern:
+
+            return "date"
+
+    # =====================================================
+    # MONTH
+    # =====================================================
+
+    month_patterns = (
+        "month",
+        "current month",
+        "what month is this",
+        "which month is this",
+        "what is the current month"
+    )
+
+    for pattern in month_patterns:
+
+        if text == pattern:
+
+            return "month"
+
+    # =====================================================
+    # YEAR
+    # =====================================================
+
+    year_patterns = (
+        "year",
+        "current year",
+        "what year is this",
+        "which year is this",
+        "what is the current year"
+    )
+
+    for pattern in year_patterns:
+
+        if text == pattern:
+
+            return "year"
+
+    # =====================================================
+    # CALENDAR
+    # =====================================================
+
+    calendar_patterns = (
+        "calendar",
+        "calender",
+        "show calendar",
+        "show calender",
+        "current calendar",
+        "this month calendar"
+    )
+
+    for pattern in calendar_patterns:
+
+        if text == pattern:
+
+            return "calendar"
+
+    # =====================================================
+    # WEATHER
+    #
+    # Weather queries with city names are also supported.
+    # =====================================================
 
     if "weather" in text:
 
         return "weather"
 
     # =====================================================
-    # EXACT INFORMATION MATCH
+    # CREATOR
     # =====================================================
 
-    for intent in (
-        "time",
-        "date",
-        "month",
-        "year",
-        "calendar"
-    ):
+    creator_patterns = (
+        "who made you",
+        "who created you",
+        "who is your creator",
+        "who is your owner",
+        "who developed you",
+        "who built you",
+        "who programmed you",
+        "who is your maker",
+        "tell me your creator",
+        "tell me who made you"
+    )
 
-        for pattern in INTENTS[intent]:
+    for pattern in creator_patterns:
 
-            if text == pattern.lower():
+        if text == pattern:
 
-                return intent
+            return "ask_creator"
 
     # =====================================================
-    # HIGH PRIORITY COMMANDS
+    # IDENTITY
     # =====================================================
+
+    identity_patterns = (
+        "who are you",
+        "what is your name",
+        "whats your name",
+        "what's your name",
+        "tell me your name"
+    )
+
+    for pattern in identity_patterns:
+
+        if text == pattern:
+
+            return "ask_name"
+
+    # =====================================================
+    # MY NAME
+    # =====================================================
+
+    my_name_patterns = (
+        "what is my name",
+        "whats my name",
+        "what's my name",
+        "tell me my name",
+        "who am i",
+        "do you know my name"
+    )
+
+    for pattern in my_name_patterns:
+
+        if text == pattern:
+
+            return "ask_my_name"
+
+    return None
+
+
+# =========================================================
+# INTENT MATCHER
+# =========================================================
+
+def match_intent(text):
+
+    if not text:
+
+        return None
+
+    text = str(text).lower().strip()
+
+    if not text:
+
+        return None
+
+    # =====================================================
+    # 1. EXPLICIT COMMAND PREFIX
+    #
+    # IMPORTANT:
+    # This comes BEFORE weather detection.
+    #
+    # Therefore:
+    #
+    # search weather -> search
+    # find weather   -> search
+    # google weather -> search
+    #
+    # while:
+    #
+    # weather Delhi  -> weather
+    # =====================================================
+
+    result = _prefix_match(text)
+
+    if result:
+
+        return result
+
+    # =====================================================
+    # 2. EXACT INFORMATION MATCH
+    # =====================================================
+
+    result = _information_match(text)
+
+    if result:
+
+        return result
+
+    # =====================================================
+    # 3. HIGH PRIORITY WINDOW COMMANDS
+    # =====================================================
+
+    words = text.split()
 
     if words:
 
@@ -302,7 +582,9 @@ def match_intent(text):
             "close": "close",
 
             "minimize": "minimize",
+
             "maximize": "maximize",
+
             "restore": "restore",
 
             "switch": "switch"
@@ -313,7 +595,7 @@ def match_intent(text):
             return priority[first]
 
     # =====================================================
-    # EXACT MATCH
+    # 4. EXACT MATCH
     # =====================================================
 
     for intent, patterns in INTENTS.items():
@@ -325,17 +607,25 @@ def match_intent(text):
                 return intent
 
     # =====================================================
-    # SMART FUZZY MATCH
+    # 5. SMART FUZZY MATCH
     # =====================================================
 
     best_intent = None
     best_score = 0
+
+    text_words = set(text.split())
 
     for intent, patterns in INTENTS.items():
 
         for pattern in patterns:
 
             pattern = pattern.lower()
+
+            pattern_words = set(pattern.split())
+
+            # -------------------------------------------------
+            # Similarity
+            # -------------------------------------------------
 
             similarity = SequenceMatcher(
                 None,
@@ -345,18 +635,56 @@ def match_intent(text):
 
             score = int(similarity * 20)
 
+            # -------------------------------------------------
+            # Pattern contained in text
+            # -------------------------------------------------
+
             if pattern in text:
 
                 score += 20
+
+            # -------------------------------------------------
+            # Text starts with pattern
+            # -------------------------------------------------
 
             if text.startswith(pattern):
 
                 score += 10
 
+            # -------------------------------------------------
+            # First word match
+            # -------------------------------------------------
+
+            if (
+                text_words
+                and pattern_words
+                and next(iter(text_words)) in pattern_words
+            ):
+
+                score += 5
+
+            # -------------------------------------------------
+            # Word overlap
+            # -------------------------------------------------
+
+            overlap = text_words & pattern_words
+
+            if overlap:
+
+                score += len(overlap) * 5
+
+            # -------------------------------------------------
+            # Best result
+            # -------------------------------------------------
+
             if score > best_score:
 
                 best_score = score
                 best_intent = intent
+
+    # =====================================================
+    # 6. FUZZY THRESHOLD
+    # =====================================================
 
     if best_score >= 45:
 
