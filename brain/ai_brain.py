@@ -1,21 +1,23 @@
 """
-ARIS P2.0 AI BRAIN
+ARIS P2.1 CENTRAL AI BRAIN
 Author : Raj Babu Mishra
 
-Central AI Brain Orchestrator
+Central orchestration layer for ARIS.
 
-Purpose:
-- Conversation handling
-- Existing ARIS intelligence integration
-- Context awareness
-- Personal memory awareness
-- Smart fallback
-- PC-command delegation
-- Future LLM integration point
+Design:
+    Voice / Text
+        ↓
+    core.brain
+        ↓
+    AIBrain
+        ├─ deterministic conversation
+        ├─ personal memory
+        ├─ existing Engine / command system
+        ├─ existing chat fallback
+        └─ future LLM provider
 
-IMPORTANT:
-This module does NOT replace the existing command system.
-It sits above it and coordinates existing capabilities.
+This layer does NOT replace ARIS's existing subsystems.
+It coordinates them.
 """
 
 from __future__ import annotations
@@ -23,208 +25,101 @@ from __future__ import annotations
 from typing import Optional
 
 
+_UNKNOWN_ENGINE_PREFIXES = (
+    "Sir, I didn't understand that.",
+    "सर, मैं आपकी बात पूरी तरह नहीं समझ पाया।",
+)
+
+
 class AIBrain:
-    """
-    Central conversational brain for ARIS.
+    """Single central decision/orchestration layer for ARIS."""
 
-    The brain decides whether a request should be handled by:
-        1. Conversation
-        2. Personal AI / memory
-        3. Existing Smart Command Engine
-        4. Existing Core command executor
-        5. Future LLM layer
-
-    No existing ARIS subsystem is removed.
-    """
-
-    def __init__(self):
-        self.last_input: str = ""
-        self.last_response: str = ""
-        self.turn_count: int = 0
+    def __init__(self) -> None:
+        self.last_input = ""
+        self.last_response = ""
+        self.turn_count = 0
 
     # =========================================================
-    # INPUT
+    # NORMALIZATION / STATE
     # =========================================================
 
     def normalize(self, text: str) -> str:
-        """Basic safe normalization without destroying paths."""
         if text is None:
             return ""
 
-        text = str(text).strip()
+        return str(text).strip()
 
-        if not text:
-            return ""
+    def remember_turn(
+        self,
+        command: str,
+        response: Optional[str] = None
+    ) -> None:
 
-        return text
-
-    # =========================================================
-    # STATE
-    # =========================================================
-
-    def remember_turn(self, text: str, response: Optional[str] = None):
-        """Store lightweight conversation state."""
-        self.last_input = text
+        self.last_input = command
 
         if response is not None:
-            self.last_response = response
+            self.last_response = str(response)
 
         self.turn_count += 1
 
-    # =========================================================
-    # CONVERSATION
-    # =========================================================
+    def _save_conversation(
+        self,
+        command: str,
+        response: Optional[str]
+    ) -> None:
 
-    def conversation(self, command: str):
-        """
-        Use ARIS's existing conversation module.
+        """Best-effort persistent conversation history."""
 
-        Returns:
-            response or None
-        """
-
-        try:
-            from brain.conversation import conversation
-
-            result = conversation(command)
-
-            if result:
-                return result
-
-        except Exception:
-            pass
-
-        return None
-
-    # =========================================================
-    # PERSONAL AI
-    # =========================================================
-
-    def personal(self, command: str):
-        """
-        Use existing personal AI / memory system.
-        """
+        if not response:
+            return
 
         try:
-            from ai.personal_ai import personal_ai
 
-            result = personal_ai(command)
+            from core.memory import memory
 
-            if result:
-                return result
-
-        except Exception:
-            pass
-
-        return None
-
-    # =========================================================
-    # CHAT
-    # =========================================================
-
-    def chat(self, command: str):
-        """
-        Use the existing AI chat layer.
-
-        This is intentionally a fallback.
-        It does not override deterministic commands.
-        """
-
-        try:
-            from ai.chat import chat
-
-            result = chat(command)
-
-            if result:
-                return result
+            memory.add_conversation(
+                command,
+                str(response)
+            )
 
         except Exception:
+
+            # Conversation persistence must never
+            # break a command.
             pass
 
-        return None
-
     # =========================================================
-    # SMART COMMAND
+    # DETERMINISTIC CONVERSATION
     # =========================================================
 
-    def smart_command(self, command: str):
-        """
-        Delegate to the existing Smart Command Engine.
-
-        This keeps all current ARIS capabilities available:
-        - apps
-        - files
-        - folders
-        - browser
-        - search
-        - websites
-        - music
-        - calculator
-        - Wikipedia
-        - weather
-        - system commands
-        """
-
-        try:
-            from core.smart_commands import smart_command
-
-            result = smart_command(command)
-
-            if result:
-                return result
-
-        except Exception:
-            pass
-
-        return None
-
-    # =========================================================
-    # CORE COMMAND
-    # =========================================================
-
-    def core_command(self, command: str):
-        """
-        Direct fallback to the existing command executor.
-        """
-
-        try:
-            from core.commands import execute
-
-            result = execute(command)
-
-            if result:
-                return result
-
-        except Exception:
-            pass
-
-        return None
-
-    # =========================================================
-    # DETERMINISTIC RESPONSES
-    # =========================================================
-
-    def deterministic(self, command: str):
-        """
-        Small set of guaranteed conversational responses.
-
-        Deterministic commands remain outside the future LLM.
-        """
+    def deterministic(
+        self,
+        command: str
+    ) -> Optional[str]:
 
         text = command.lower().strip()
 
-        if text in (
+        # -----------------------------------------------------
+        # IDENTITY
+        # -----------------------------------------------------
+
+        if text in {
             "who are you",
             "what is your name",
             "whats your name",
             "what's your name",
-        ):
+        }:
+
             return (
                 "Hello Sir.\n"
                 "My name is ARIS."
             )
 
-        if text in (
+        # -----------------------------------------------------
+        # CREATOR
+        # -----------------------------------------------------
+
+        if text in {
             "who made you",
             "who created you",
             "who is your creator",
@@ -232,156 +127,291 @@ class AIBrain:
             "who built you",
             "who developed you",
             "who programmed you",
-        ):
-            return "I was created by Raj Babu Mishra."
+            "who is your maker",
+        }:
 
-        if text in (
+            return (
+                "I was created by "
+                "Raj Babu Mishra."
+            )
+
+        # -----------------------------------------------------
+        # GENERAL CONVERSATION
+        # -----------------------------------------------------
+
+        if text in {
             "how are you",
             "how are you doing",
-        ):
-            return "I am doing great, Sir. Ready to help."
+        }:
 
-        if text in (
+            return (
+                "I am doing great, Sir. "
+                "Ready to help."
+            )
+
+        # -----------------------------------------------------
+        # THANKS
+        # -----------------------------------------------------
+
+        if text in {
             "thank you",
             "thanks",
             "thankyou",
-        ):
-            return "You're welcome, Sir."
+        }:
+
+            return (
+                "You're welcome, Sir."
+            )
 
         return None
 
     # =========================================================
-    # FUTURE LLM
+    # PERSONAL AI / MEMORY
     # =========================================================
 
-    def llm(self, command: str):
+    def personal(
+        self,
+        command: str
+    ) -> Optional[str]:
+
+        try:
+
+            from ai.personal_ai import personal_ai
+
+            return personal_ai(command)
+
+        except Exception:
+
+            return None
+
+    # =========================================================
+    # EXISTING CORE ENGINE
+    # =========================================================
+
+    def engine(
+        self,
+        command: str
+    ) -> Optional[str]:
+
         """
-        Future LLM integration point.
+        Delegate all established ARIS functionality
+        to the existing deterministic Engine.
 
-        IMPORTANT:
-        Currently returns None.
+        Import is lazy to avoid startup cycles.
+        """
 
-        Later this method can connect ARIS to a real
-        language model without rewriting the entire engine.
+        try:
+
+            from core.engine import engine
+
+            return engine.process(command)
+
+        except Exception as error:
+
+            print(
+                f"⚠ AI Brain engine error: {error}"
+            )
+
+            return None
+
+    # =========================================================
+    # BASIC CHAT FALLBACK
+    # =========================================================
+
+    def chat(
+        self,
+        command: str
+    ) -> Optional[str]:
+
+        try:
+
+            from ai.chat import chat
+
+            return chat(command)
+
+        except Exception:
+
+            return None
+
+    # =========================================================
+    # FUTURE LLM PROVIDER
+    # =========================================================
+
+    def llm(
+        self,
+        command: str
+    ) -> Optional[str]:
+
+        """
+        Reserved provider boundary.
+
+        A real LLM can be connected here later without
+        changing the voice listener, core engine,
+        memory, or command router.
         """
 
         return None
+
+    # =========================================================
+    # ENGINE RESULT QUALITY
+    # =========================================================
+
+    def _is_generic_unknown(
+        self,
+        response: Optional[str]
+    ) -> bool:
+
+        if not response:
+            return True
+
+        value = str(response).strip()
+
+        return any(
+            value.startswith(prefix)
+            for prefix in _UNKNOWN_ENGINE_PREFIXES
+        )
 
     # =========================================================
     # THINK
     # =========================================================
 
-    def think(self, command: str):
-        """
-        Main AI Brain decision pipeline.
-
-        Priority:
-
-        deterministic
-             ↓
-        conversation
-             ↓
-        personal AI
-             ↓
-        existing smart command engine
-             ↓
-        core executor
-             ↓
-        existing chat
-             ↓
-        future LLM
-        """
+    def think(
+        self,
+        command: str
+    ) -> Optional[str]:
 
         command = self.normalize(command)
 
         if not command:
             return None
 
-        # -----------------------------------------------------
-        # Deterministic identity/conversation
-        # -----------------------------------------------------
+        # =====================================================
+        # 1. GUARANTEED IDENTITY / BASIC CONVERSATION
+        # =====================================================
 
         result = self.deterministic(command)
 
         if result:
-            self.remember_turn(command, result)
+
+            self.remember_turn(
+                command,
+                result
+            )
+
+            self._save_conversation(
+                command,
+                result
+            )
+
             return result
 
-        # -----------------------------------------------------
-        # Existing conversation system
-        # -----------------------------------------------------
-
-        result = self.conversation(command)
-
-        if result:
-            self.remember_turn(command, result)
-            return result
-
-        # -----------------------------------------------------
-        # Existing personal AI / memory
-        # -----------------------------------------------------
+        # =====================================================
+        # 2. PERSONAL MEMORY / PROFILE
+        # =====================================================
 
         result = self.personal(command)
 
         if result:
-            self.remember_turn(command, result)
+
+            self.remember_turn(
+                command,
+                result
+            )
+
+            self._save_conversation(
+                command,
+                result
+            )
+
             return result
 
-        # -----------------------------------------------------
-        # Existing Smart Command Engine
+        # =====================================================
+        # 3. EXISTING ARIS ENGINE
         #
-        # This is intentionally BEFORE generic chat so that
-        # commands such as:
+        # IMPORTANT:
         #
-        # open chrome
-        # weather Delhi
-        # search Python
-        # calculate 5 + 5
+        # Existing capabilities remain active:
         #
-        # continue using deterministic ARIS functionality.
-        # -----------------------------------------------------
+        # time
+        # date
+        # weather
+        # search
+        # open
+        # close
+        # files
+        # folders
+        # system
+        # automation
+        # etc.
+        # =====================================================
 
-        result = self.smart_command(command)
+        result = self.engine(command)
 
-        if result:
-            self.remember_turn(command, result)
+        if (
+            result
+            and not self._is_generic_unknown(result)
+        ):
+
+            self.remember_turn(
+                command,
+                result
+            )
+
+            self._save_conversation(
+                command,
+                result
+            )
+
             return result
 
-        # -----------------------------------------------------
-        # Direct core command fallback
-        # -----------------------------------------------------
-
-        result = self.core_command(command)
-
-        if result:
-            self.remember_turn(command, result)
-            return result
-
-        # -----------------------------------------------------
-        # Existing basic chat
-        # -----------------------------------------------------
+        # =====================================================
+        # 4. EXISTING BASIC CHAT
+        # =====================================================
 
         result = self.chat(command)
 
         if result:
-            self.remember_turn(command, result)
+
+            self.remember_turn(
+                command,
+                result
+            )
+
+            self._save_conversation(
+                command,
+                result
+            )
+
             return result
 
-        # -----------------------------------------------------
-        # Future LLM
-        # -----------------------------------------------------
+        # =====================================================
+        # 5. FUTURE LLM
+        # =====================================================
 
         result = self.llm(command)
 
         if result:
-            self.remember_turn(command, result)
+
+            self.remember_turn(
+                command,
+                result
+            )
+
+            self._save_conversation(
+                command,
+                result
+            )
+
             return result
 
-        # -----------------------------------------------------
-        # Nothing understood
-        # -----------------------------------------------------
+        # =====================================================
+        # NOTHING UNDERSTOOD
+        # =====================================================
 
-        self.remember_turn(command, None)
+        self.remember_turn(
+            command,
+            None
+        )
 
         return None
 
@@ -389,16 +419,25 @@ class AIBrain:
     # PUBLIC API
     # =========================================================
 
-    def process(self, command: str):
-        """Public entry point."""
+    def process(
+        self,
+        command: str
+    ) -> Optional[str]:
+
         return self.think(command)
 
-    def ask(self, command: str):
-        """Natural alias for process()."""
+    def ask(
+        self,
+        command: str
+    ) -> Optional[str]:
+
         return self.think(command)
 
-    def reply(self, command: str):
-        """Natural alias for process()."""
+    def reply(
+        self,
+        command: str
+    ) -> Optional[str]:
+
         return self.think(command)
 
 
@@ -407,4 +446,5 @@ class AIBrain:
 # =============================================================
 
 ai_brain = AIBrain()
+
 brain = ai_brain

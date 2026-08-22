@@ -1,18 +1,25 @@
 """
-ARIS P2.0 AI Brain Core Engine
+ARIS V18 AI BRAIN CORE ENGINE
 Author : Raj Babu Mishra
 
-P2.0
+P2.1
 Central AI Brain Integration
-Information Routing
-Location-aware Weather
-Context-aware Execution
-Existing PC Control Preservation
+
+Purpose:
+- Central AI Brain orchestration
+- Existing ARIS intelligence preserved
+- Information commands
+- Weather
+- Context
+- NLU
+- Existing Smart Command Engine
+- Existing Core Command Engine
+- Planner / Reasoning / Decision
+- Safe fallback
 
 IMPORTANT:
-This engine keeps the existing ARIS command pipeline intact.
-The new AI Brain is used as the intelligent fallback/orchestration
-layer instead of replacing the existing command systems.
+This file does NOT remove the existing ARIS command system.
+The AI Brain sits above the existing capabilities.
 """
 
 from datetime import datetime
@@ -33,7 +40,7 @@ from core.identity import aris
 from ai.weather import get_weather
 
 # =========================================================
-# P2.0 AI BRAIN
+# CENTRAL AI BRAIN
 # =========================================================
 
 from brain.ai_brain import ai_brain
@@ -49,9 +56,9 @@ class Engine:
         self.last_intent = ""
         self.last_response = ""
 
-    # =====================================================
+    # =========================================================
     # INFORMATION COMMANDS
-    # =====================================================
+    # =========================================================
 
     def _information_command(self, text):
 
@@ -60,16 +67,14 @@ class Engine:
         if not command:
             return None
 
-        # =================================================
+        # =====================================================
         # TIME
-        # =================================================
+        # =====================================================
 
         if command in (
             "time",
             "what is the time",
             "what is time",
-            "what's the time",
-            "whats the time",
             "current time",
             "tell me the time",
             "what time is it"
@@ -77,25 +82,25 @@ class Engine:
 
             return datetime.now().strftime("%I:%M %p")
 
-        # =================================================
+        # =====================================================
         # DATE
-        # =================================================
+        # =====================================================
 
         if command in (
             "date",
             "today date",
             "today's date",
             "what is the date",
-            "what's the date",
-            "whats the date",
             "what is today's date",
+            "what's the date",
+            "whats the date"
         ):
 
             return datetime.now().strftime("%d-%m-%Y")
 
-        # =================================================
+        # =====================================================
         # MONTH
-        # =================================================
+        # =====================================================
 
         if command in (
             "month",
@@ -107,9 +112,9 @@ class Engine:
 
             return datetime.now().strftime("%B")
 
-        # =================================================
+        # =====================================================
         # YEAR
-        # =================================================
+        # =====================================================
 
         if command in (
             "year",
@@ -121,9 +126,9 @@ class Engine:
 
             return datetime.now().strftime("%Y")
 
-        # =================================================
+        # =====================================================
         # CALENDAR
-        # =================================================
+        # =====================================================
 
         if command in (
             "calendar",
@@ -136,9 +141,9 @@ class Engine:
 
             return datetime.now().strftime("%B %Y")
 
-        # =================================================
+        # =====================================================
         # WEATHER
-        # =================================================
+        # =====================================================
 
         default_weather_commands = (
             "weather",
@@ -149,119 +154,82 @@ class Engine:
             "tell me the weather",
             "tell me weather",
             "what is weather",
-            "what's weather",
-            "weather today"
+            "what's weather"
         )
-
-        # -------------------------------------------------
-        # Default location
-        # -------------------------------------------------
 
         if command in default_weather_commands:
 
             return get_weather("Prayagraj")
 
-        # -------------------------------------------------
-        # weather <city>
-        # -------------------------------------------------
+        # =====================================================
+        # WEATHER CITY
+        # =====================================================
 
-        if command.startswith("weather "):
+        weather_prefixes = (
+            "weather ",
+            "current weather ",
+            "what is the weather in ",
+            "what is weather in ",
+            "what's the weather in ",
+            "what's weather in ",
+            "whats the weather in ",
+            "tell me the weather in ",
+            "what is the weather at ",
+            "weather at ",
+            "weather for "
+        )
 
-            city = command[len("weather "):].strip()
+        for prefix in weather_prefixes:
 
-            if city:
+            if command.startswith(prefix):
 
-                return get_weather(city)
+                city = command[len(prefix):].strip()
 
-        # -------------------------------------------------
-        # current weather <city>
-        # -------------------------------------------------
+                if city:
 
-        if command.startswith("current weather "):
-
-            city = command[
-                len("current weather "):
-            ].strip()
-
-            if city:
-
-                return get_weather(city)
-
-        # -------------------------------------------------
-        # what is the weather in <city>
-        # -------------------------------------------------
-
-        if command.startswith("what is the weather in "):
-
-            city = command[
-                len("what is the weather in "):
-            ].strip()
-
-            if city:
-
-                return get_weather(city)
-
-        # -------------------------------------------------
-        # what is weather in <city>
-        # -------------------------------------------------
-
-        if command.startswith("what is weather in "):
-
-            city = command[
-                len("what is weather in "):
-            ].strip()
-
-            if city:
-
-                return get_weather(city)
-
-        # -------------------------------------------------
-        # what's the weather in <city>
-        # -------------------------------------------------
-
-        if command.startswith("what's the weather in "):
-
-            city = command[
-                len("what's the weather in "):
-            ].strip()
-
-            if city:
-
-                return get_weather(city)
-
-        # -------------------------------------------------
-        # what's weather in <city>
-        # -------------------------------------------------
-
-        if command.startswith("what's weather in "):
-
-            city = command[
-                len("what's weather in "):
-            ].strip()
-
-            if city:
-
-                return get_weather(city)
-
-        # -------------------------------------------------
-        # tell me the weather in <city>
-        # -------------------------------------------------
-
-        if command.startswith("tell me the weather in "):
-
-            city = command[
-                len("tell me the weather in "):
-            ].strip()
-
-            if city:
-
-                return get_weather(city)
+                    return get_weather(city)
 
         return None
 
-    # =====================================================
+    # =========================================================
+    # AI BRAIN
+    # =========================================================
+
+    def _ai_brain(self, text):
+        """
+        Central AI Brain entry point.
+
+        The existing ARIS systems remain untouched.
+        If the Brain understands the request, its response
+        is returned.
+
+        If it cannot handle the request, None is returned
+        and the old Engine pipeline continues.
+        """
+
+        if not text:
+            return None
+
+        try:
+
+            result = ai_brain.process(text)
+
+            if result:
+
+                return result
+
+        except Exception as error:
+
+            # Brain failure must NEVER crash ARIS.
+            print(
+                f"[AI BRAIN FALLBACK] {error}"
+            )
+
+        return None
+
+    # =========================================================
     # MAIN PROCESSOR
-    # =====================================================
+    # =========================================================
 
     def process(self, command):
 
@@ -275,35 +243,53 @@ class Engine:
 
             return None
 
-        # =================================================
+        # =====================================================
         # CONTEXT
-        # =================================================
+        # =====================================================
 
-        context.remember(command)
+        try:
 
-        command = context.resolve(command)
+            context.remember(command)
 
-        # =================================================
+            command = context.resolve(command)
+
+        except Exception:
+
+            pass
+
+        # =====================================================
         # NLU
-        # =================================================
+        # =====================================================
 
         text = nlu.normalize(command)
 
-        # =================================================
+        # =====================================================
         # SPEECH RECOVERY
-        # =================================================
+        # =====================================================
 
-        text = speech_recovery(text)
+        try:
 
-        # =================================================
+            text = speech_recovery(text)
+
+        except Exception:
+
+            pass
+
+        # =====================================================
         # COMMAND RECOVERY
-        # =================================================
+        # =====================================================
 
-        text = command_recovery.recover(text)
+        try:
 
-        # =================================================
-        # INTENT + ENTITIES
-        # =================================================
+            text = command_recovery.recover(text)
+
+        except Exception:
+
+            pass
+
+        # =====================================================
+        # NLU RESULT
+        # =====================================================
 
         intent = nlu.intent(text)
 
@@ -312,12 +298,11 @@ class Engine:
         self.last_command = text
         self.last_intent = intent
 
-        # =================================================
+        # =====================================================
         # INFORMATION COMMANDS
         #
-        # Deterministic information commands always get
-        # priority over generic AI.
-        # =================================================
+        # Keep deterministic information commands first.
+        # =====================================================
 
         information = self._information_command(text)
 
@@ -327,33 +312,74 @@ class Engine:
 
             return information
 
-        # =================================================
+        # =====================================================
+        # CENTRAL AI BRAIN
+        #
+        # From this point ARIS gives the central Brain the
+        # first opportunity to understand the request.
+        #
+        # Existing systems are NOT removed.
+        # =====================================================
+
+        brain_response = self._ai_brain(text)
+
+        if brain_response:
+
+            self.last_response = brain_response
+
+            return brain_response
+
+        # =====================================================
         # PLANNER
-        # =================================================
+        # =====================================================
 
-        plan = planner.create_plan(text)
+        try:
 
-        # =================================================
+            plan = planner.create_plan(text)
+
+        except Exception:
+
+            plan = None
+
+        # =====================================================
         # DECISION
-        # =================================================
+        # =====================================================
 
-        decision.decide(text)
+        try:
 
-        # =================================================
+            decision.decide(text)
+
+        except Exception:
+
+            pass
+
+        # =====================================================
         # REASONING
-        # =================================================
+        # =====================================================
 
-        reasoning.think(text)
+        try:
 
-        # =================================================
+            reasoning.think(text)
+
+        except Exception:
+
+            pass
+
+        # =====================================================
         # ROUTER
-        # =================================================
+        # =====================================================
 
-        router.route(text)
+        try:
 
-        # =================================================
+            router.route(text)
+
+        except Exception:
+
+            pass
+
+        # =====================================================
         # GREETING
-        # =================================================
+        # =====================================================
 
         if intent == "greeting":
 
@@ -363,9 +389,9 @@ class Engine:
 
             return self.last_response
 
-        # =================================================
+        # =====================================================
         # ASK ARIS NAME
-        # =================================================
+        # =====================================================
 
         if intent == "ask_name":
 
@@ -376,18 +402,24 @@ class Engine:
 
             return self.last_response
 
-        # =================================================
+        # =====================================================
         # ASK USER NAME
-        # =================================================
+        # =====================================================
 
         if intent == "ask_my_name":
 
-            profile = self.memory.get_profile()
+            try:
 
-            name = profile.get(
-                "name",
-                ""
-            ).strip()
+                profile = self.memory.get_profile()
+
+                name = profile.get(
+                    "name",
+                    ""
+                ).strip()
+
+            except Exception:
+
+                name = ""
 
             if name:
 
@@ -403,9 +435,9 @@ class Engine:
 
             return self.last_response
 
-        # =================================================
+        # =====================================================
         # ASK CREATOR
-        # =================================================
+        # =====================================================
 
         if intent == "ask_creator":
 
@@ -415,18 +447,26 @@ class Engine:
 
             return self.last_response
 
-        # =================================================
+        # =====================================================
         # FAVORITE COLOR
-        # =================================================
+        # =====================================================
 
         if intent == "ask_favorite_color":
 
-            pref = self.memory.get_preferences()
+            try:
 
-            color = pref.get(
-                "favorite_color",
-                ""
-            ).strip()
+                preferences = (
+                    self.memory.get_preferences()
+                )
+
+                color = preferences.get(
+                    "favorite_color",
+                    ""
+                ).strip()
+
+            except Exception:
+
+                color = ""
 
             if color:
 
@@ -443,9 +483,9 @@ class Engine:
 
             return self.last_response
 
-        # =================================================
+        # =====================================================
         # REMEMBER
-        # =================================================
+        # =====================================================
 
         if intent == "remember":
 
@@ -456,11 +496,19 @@ class Engine:
 
             if not query:
 
-                return (
+                self.last_response = (
                     "Sir, what should I remember?"
                 )
 
-            self.memory.remember(query)
+                return self.last_response
+
+            try:
+
+                self.memory.remember(query)
+
+            except Exception:
+
+                pass
 
             self.last_response = (
                 "Sir, I have remembered it."
@@ -468,9 +516,9 @@ class Engine:
 
             return self.last_response
 
-        # =================================================
-        # SEARCH MEMORY
-        # =================================================
+        # =====================================================
+        # SEARCH
+        # =====================================================
 
         if intent == "search":
 
@@ -481,78 +529,35 @@ class Engine:
 
             if not keyword:
 
-                return (
+                self.last_response = (
                     "Sir, what should I search?"
                 )
 
-            result = self.memory.search(keyword)
+                return self.last_response
+
+            try:
+
+                result = self.memory.search(
+                    keyword
+                )
+
+            except Exception:
+
+                result = None
 
             if result:
 
-                self.last_response = "\n".join(result)
-
-            else:
-
                 self.last_response = (
-                    "Sir, I couldn't find anything."
+                    "\n".join(result)
                 )
 
-            return self.last_response
+                return self.last_response
 
-        # =================================================
-        # EXIT
-        # =================================================
-
-        if intent == "exit":
-
-            self.last_response = "exit"
-
-            return self.last_response
-
-        # =================================================
-        # P2.0 AI BRAIN
-        #
-        # Existing deterministic systems have already
-        # handled information, identity and memory.
-        #
-        # Now the central AI Brain gets the opportunity
-        # to understand the remaining request.
-        #
-        # The Brain itself delegates to existing:
-        # - conversation
-        # - personal AI
-        # - smart command engine
-        # - core command executor
-        # - chat
-        # - future LLM
-        # =================================================
-
-        try:
-
-            brain_response = ai_brain.process(text)
-
-        except Exception as error:
-
-            print(
-                "⚠️ AI Brain fallback:",
-                error
-            )
-
-            brain_response = None
-
-        if brain_response:
-
-            self.last_response = brain_response
-
-            return self.last_response
-
-        # =================================================
+        # =====================================================
         # WINDOW / APP COMMANDS
         #
-        # Kept as direct fallback so existing PC-control
-        # behavior remains available even if AI Brain does
-        # not handle the command.
-        # =================================================
+        # Existing command system remains active.
+        # =====================================================
 
         if intent in (
             "open",
@@ -563,7 +568,13 @@ class Engine:
             "switch"
         ):
 
-            response = execute(text)
+            try:
+
+                response = execute(text)
+
+            except Exception:
+
+                response = None
 
             if response:
 
@@ -571,11 +582,25 @@ class Engine:
 
                 return response
 
-        # =================================================
-        # GENERAL CORE EXECUTION
-        # =================================================
+        # =====================================================
+        # EXIT
+        # =====================================================
 
-        response = execute(text)
+        if intent == "exit":
+
+            return "exit"
+
+        # =====================================================
+        # GENERAL CORE EXECUTION
+        # =====================================================
+
+        try:
+
+            response = execute(text)
+
+        except Exception:
+
+            response = None
 
         if response:
 
@@ -583,13 +608,19 @@ class Engine:
 
             return response
 
-        # =================================================
+        # =====================================================
         # PLANNER FALLBACK
-        # =================================================
+        # =====================================================
 
         if plan:
 
-            step = planner.next_step(plan)
+            try:
+
+                step = planner.next_step(plan)
+
+            except Exception:
+
+                step = None
 
             if step:
 
@@ -597,9 +628,9 @@ class Engine:
 
                 return step
 
-        # =================================================
+        # =====================================================
         # CONTEXT REPLY
-        # =================================================
+        # =====================================================
 
         try:
 
@@ -615,9 +646,9 @@ class Engine:
 
             pass
 
-        # =================================================
-        # UNKNOWN
-        # =================================================
+        # =====================================================
+        # FINAL UNKNOWN
+        # =====================================================
 
         self.last_response = (
             "Sir, I didn't understand that.\n"
@@ -628,7 +659,7 @@ class Engine:
 
 
 # =========================================================
-# GLOBAL ENGINE INSTANCE
+# SINGLETON
 # =========================================================
 
 engine = Engine()
