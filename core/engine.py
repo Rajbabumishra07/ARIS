@@ -1,11 +1,18 @@
 """
-ARIS V17.9 Stable Core Engine
+ARIS P2.0 AI Brain Core Engine
 Author : Raj Babu Mishra
 
-P1.5
-Information Command Routing
+P2.0
+Central AI Brain Integration
+Information Routing
 Location-aware Weather
 Context-aware Execution
+Existing PC Control Preservation
+
+IMPORTANT:
+This engine keeps the existing ARIS command pipeline intact.
+The new AI Brain is used as the intelligent fallback/orchestration
+layer instead of replacing the existing command systems.
 """
 
 from datetime import datetime
@@ -25,6 +32,12 @@ from core.identity import aris
 
 from ai.weather import get_weather
 
+# =========================================================
+# P2.0 AI BRAIN
+# =========================================================
+
+from brain.ai_brain import ai_brain
+
 
 class Engine:
 
@@ -36,9 +49,9 @@ class Engine:
         self.last_intent = ""
         self.last_response = ""
 
-    # =================================================
+    # =====================================================
     # INFORMATION COMMANDS
-    # =================================================
+    # =====================================================
 
     def _information_command(self, text):
 
@@ -55,8 +68,11 @@ class Engine:
             "time",
             "what is the time",
             "what is time",
+            "what's the time",
+            "whats the time",
             "current time",
-            "tell me the time"
+            "tell me the time",
+            "what time is it"
         ):
 
             return datetime.now().strftime("%I:%M %p")
@@ -70,7 +86,9 @@ class Engine:
             "today date",
             "today's date",
             "what is the date",
-            "what is today's date"
+            "what's the date",
+            "whats the date",
+            "what is today's date",
         ):
 
             return datetime.now().strftime("%d-%m-%Y")
@@ -83,7 +101,8 @@ class Engine:
             "month",
             "current month",
             "what month is this",
-            "which month is this"
+            "which month is this",
+            "what is the current month"
         ):
 
             return datetime.now().strftime("%B")
@@ -96,7 +115,8 @@ class Engine:
             "year",
             "current year",
             "what year is this",
-            "which year is this"
+            "which year is this",
+            "what is the current year"
         ):
 
             return datetime.now().strftime("%Y")
@@ -109,7 +129,9 @@ class Engine:
             "calendar",
             "calender",
             "show calendar",
-            "show calender"
+            "show calender",
+            "current calendar",
+            "this month calendar"
         ):
 
             return datetime.now().strftime("%B %Y")
@@ -123,10 +145,12 @@ class Engine:
             "current weather",
             "what is the weather",
             "what's the weather",
+            "whats the weather",
             "tell me the weather",
             "tell me weather",
             "what is weather",
-            "what's weather"
+            "what's weather",
+            "weather today"
         )
 
         # -------------------------------------------------
@@ -139,10 +163,6 @@ class Engine:
 
         # -------------------------------------------------
         # weather <city>
-        #
-        # Example:
-        # weather delhi
-        # weather prayagraj
         # -------------------------------------------------
 
         if command.startswith("weather "):
@@ -150,6 +170,7 @@ class Engine:
             city = command[len("weather "):].strip()
 
             if city:
+
                 return get_weather(city)
 
         # -------------------------------------------------
@@ -163,6 +184,7 @@ class Engine:
             ].strip()
 
             if city:
+
                 return get_weather(city)
 
         # -------------------------------------------------
@@ -176,6 +198,7 @@ class Engine:
             ].strip()
 
             if city:
+
                 return get_weather(city)
 
         # -------------------------------------------------
@@ -189,6 +212,7 @@ class Engine:
             ].strip()
 
             if city:
+
                 return get_weather(city)
 
         # -------------------------------------------------
@@ -202,6 +226,7 @@ class Engine:
             ].strip()
 
             if city:
+
                 return get_weather(city)
 
         # -------------------------------------------------
@@ -215,6 +240,7 @@ class Engine:
             ].strip()
 
             if city:
+
                 return get_weather(city)
 
         # -------------------------------------------------
@@ -228,22 +254,25 @@ class Engine:
             ].strip()
 
             if city:
+
                 return get_weather(city)
 
         return None
 
-    # =================================================
+    # =====================================================
     # MAIN PROCESSOR
-    # =================================================
+    # =====================================================
 
     def process(self, command):
 
         if command is None:
+
             return None
 
         command = str(command).strip()
 
         if not command:
+
             return None
 
         # =================================================
@@ -272,6 +301,10 @@ class Engine:
 
         text = command_recovery.recover(text)
 
+        # =================================================
+        # INTENT + ENTITIES
+        # =================================================
+
         intent = nlu.intent(text)
 
         entities = nlu.entities(text)
@@ -282,9 +315,8 @@ class Engine:
         # =================================================
         # INFORMATION COMMANDS
         #
-        # IMPORTANT:
-        # Information commands are handled BEFORE
-        # core.commands.execute().
+        # Deterministic information commands always get
+        # priority over generic AI.
         # =================================================
 
         information = self._information_command(text)
@@ -377,11 +409,11 @@ class Engine:
 
         if intent == "ask_creator":
 
-           self.last_response = (
-               "I was created by Raj Babu Mishra."
+            self.last_response = (
+                "I was created by Raj Babu Mishra."
             )
 
-        return self.last_response
+            return self.last_response
 
         # =================================================
         # FAVORITE COLOR
@@ -437,7 +469,7 @@ class Engine:
             return self.last_response
 
         # =================================================
-        # SEARCH
+        # SEARCH MEMORY
         # =================================================
 
         if intent == "search":
@@ -468,7 +500,58 @@ class Engine:
             return self.last_response
 
         # =================================================
+        # EXIT
+        # =================================================
+
+        if intent == "exit":
+
+            self.last_response = "exit"
+
+            return self.last_response
+
+        # =================================================
+        # P2.0 AI BRAIN
+        #
+        # Existing deterministic systems have already
+        # handled information, identity and memory.
+        #
+        # Now the central AI Brain gets the opportunity
+        # to understand the remaining request.
+        #
+        # The Brain itself delegates to existing:
+        # - conversation
+        # - personal AI
+        # - smart command engine
+        # - core command executor
+        # - chat
+        # - future LLM
+        # =================================================
+
+        try:
+
+            brain_response = ai_brain.process(text)
+
+        except Exception as error:
+
+            print(
+                "⚠️ AI Brain fallback:",
+                error
+            )
+
+            brain_response = None
+
+        if brain_response:
+
+            self.last_response = brain_response
+
+            return self.last_response
+
+        # =================================================
         # WINDOW / APP COMMANDS
+        #
+        # Kept as direct fallback so existing PC-control
+        # behavior remains available even if AI Brain does
+        # not handle the command.
         # =================================================
 
         if intent in (
@@ -487,14 +570,6 @@ class Engine:
                 self.last_response = response
 
                 return response
-
-        # =================================================
-        # EXIT
-        # =================================================
-
-        if intent == "exit":
-
-            return "exit"
 
         # =================================================
         # GENERAL CORE EXECUTION
@@ -551,5 +626,9 @@ class Engine:
 
         return self.last_response
 
+
+# =========================================================
+# GLOBAL ENGINE INSTANCE
+# =========================================================
 
 engine = Engine()
